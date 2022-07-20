@@ -1,0 +1,1 @@
+declare ethers = import('hardhat').ethers;
