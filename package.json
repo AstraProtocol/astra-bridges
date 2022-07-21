@@ -32,7 +32,7 @@
     "cssnano": "^5.1.12",
     "eslint": "8.20.0",
     "eslint-config-next": "12.2.2",
-    "ethers": "^5.4.7",
+    "ethers": "^5.6.9",
     "hardhat": "^2.9.9",
     "hardhat-gas-reporter": "^1.0.8",
     "jest": "^28.1.3",
