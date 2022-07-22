@@ -9,16 +9,8 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 abstract contract ONFT721Core is NonblockingLzApp, ERC165, IONFT721Core {
     constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC165, IERC165)
-        returns (bool)
-    {
-        return
-            interfaceId == type(IONFT721Core).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IONFT721Core).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function estimateSendFee(
@@ -30,14 +22,7 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, IONFT721Core {
     ) public view virtual override returns (uint256 nativeFee, uint256 zroFee) {
         // mock the payload for send()
         bytes memory payload = abi.encode(_toAddress, _tokenId);
-        return
-            lzEndpoint.estimateFees(
-                _dstChainId,
-                address(this),
-                payload,
-                _useZro,
-                _adapterParams
-            );
+        return lzEndpoint.estimateFees(_dstChainId, address(this), payload, _useZro, _adapterParams);
     }
 
     function sendFrom(
@@ -49,15 +34,7 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, IONFT721Core {
         address _zroPaymentAddress,
         bytes memory _adapterParams
     ) public payable virtual override {
-        _send(
-            _from,
-            _dstChainId,
-            _toAddress,
-            _tokenId,
-            _refundAddress,
-            _zroPaymentAddress,
-            _adapterParams
-        );
+        _send(_from, _dstChainId, _toAddress, _tokenId, _refundAddress, _zroPaymentAddress, _adapterParams);
     }
 
     function _send(
@@ -72,13 +49,7 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, IONFT721Core {
         _debitFrom(_from, _dstChainId, _toAddress, _tokenId);
 
         bytes memory payload = abi.encode(_toAddress, _tokenId);
-        _lzSend(
-            _dstChainId,
-            payload,
-            _refundAddress,
-            _zroPaymentAddress,
-            _adapterParams
-        );
+        _lzSend(_dstChainId, payload, _refundAddress, _zroPaymentAddress, _adapterParams);
 
         uint64 nonce = lzEndpoint.getOutboundNonce(_dstChainId, address(this));
         emit SendToChain(_from, _dstChainId, _toAddress, _tokenId, nonce);
@@ -91,10 +62,7 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, IONFT721Core {
         bytes memory _payload
     ) internal virtual override {
         // decode and load the toAddress
-        (bytes memory toAddressBytes, uint256 tokenId) = abi.decode(
-            _payload,
-            (bytes, uint256)
-        );
+        (bytes memory toAddressBytes, uint256 tokenId) = abi.decode(_payload, (bytes, uint256));
         address toAddress;
         assembly {
             toAddress := mload(add(toAddressBytes, 20))
@@ -102,13 +70,7 @@ abstract contract ONFT721Core is NonblockingLzApp, ERC165, IONFT721Core {
 
         _creditTo(_srcChainId, toAddress, tokenId);
 
-        emit ReceiveFromChain(
-            _srcChainId,
-            _srcAddress,
-            toAddress,
-            tokenId,
-            _nonce
-        );
+        emit ReceiveFromChain(_srcChainId, _srcAddress, toAddress, tokenId, _nonce);
     }
 
     function _debitFrom(

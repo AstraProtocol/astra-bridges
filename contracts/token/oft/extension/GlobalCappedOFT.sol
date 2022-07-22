@@ -16,11 +16,7 @@ contract GlobalCappedOFT is BasedOFT, ERC20Capped {
         address _lzEndpoint
     ) BasedOFT(_name, _symbol, _lzEndpoint) ERC20Capped(_cap) {}
 
-    function _mint(address account, uint256 amount)
-        internal
-        virtual
-        override(ERC20, ERC20Capped)
-    {
+    function _mint(address account, uint256 amount) internal virtual override(ERC20, ERC20Capped) {
         ERC20Capped._mint(account, amount);
     }
 }

@@ -37,10 +37,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
         (amount) = abi.decode(data, (uint256));
 
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
-        require(
-            _contractWhitelist[tokenAddress],
-            "provided tokenAddress is not whitelisted"
-        );
+        require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
 
         if (_burnList[tokenAddress]) {
             burnERC20(tokenAddress, depositer, amount);
@@ -59,22 +56,13 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
         destinationRecipientAddress length     uint256     bytes  32 - 64
         destinationRecipientAddress            bytes       bytes  64 - END
      */
-    function executeProposal(bytes32 resourceID, bytes calldata data)
-        external
-        override
-        onlyBridge
-    {
+    function executeProposal(bytes32 resourceID, bytes calldata data) external override onlyBridge {
         uint256 amount;
         uint256 lenDestinationRecipientAddress;
         bytes memory destinationRecipientAddress;
 
-        (amount, lenDestinationRecipientAddress) = abi.decode(
-            data,
-            (uint256, uint256)
-        );
-        destinationRecipientAddress = bytes(
-            data[64:64 + lenDestinationRecipientAddress]
-        );
+        (amount, lenDestinationRecipientAddress) = abi.decode(data, (uint256, uint256));
+        destinationRecipientAddress = bytes(data[64:64 + lenDestinationRecipientAddress]);
 
         bytes20 recipientAddress;
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
@@ -83,10 +71,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
             recipientAddress := mload(add(destinationRecipientAddress, 0x20))
         }
 
-        require(
-            _contractWhitelist[tokenAddress],
-            "provided tokenAddress is not whitelisted"
-        );
+        require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
 
         if (_burnList[tokenAddress]) {
             mintERC20(tokenAddress, address(recipientAddress), amount);
@@ -108,10 +93,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
         address recipient;
         uint256 amount;
 
-        (tokenAddress, recipient, amount) = abi.decode(
-            data,
-            (address, address, uint256)
-        );
+        (tokenAddress, recipient, amount) = abi.decode(data, (address, address, uint256));
 
         releaseERC20(tokenAddress, recipient, amount);
     }

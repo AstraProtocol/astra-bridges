@@ -22,9 +22,7 @@ contract ONFT721 is ONFT721Core, ERC721, IONFT721 {
         override(ONFT721Core, ERC721, IERC165)
         returns (bool)
     {
-        return
-            interfaceId == type(IONFT721).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId == type(IONFT721).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function _debitFrom(
@@ -33,14 +31,8 @@ contract ONFT721 is ONFT721Core, ERC721, IONFT721 {
         bytes memory,
         uint256 _tokenId
     ) internal virtual override {
-        require(
-            _isApprovedOrOwner(_msgSender(), _tokenId),
-            "ONFT721: send caller is not owner nor approved"
-        );
-        require(
-            ERC721.ownerOf(_tokenId) == _from,
-            "ONFT721: send from incorrect owner"
-        );
+        require(_isApprovedOrOwner(_msgSender(), _tokenId), "ONFT721: send caller is not owner nor approved");
+        require(ERC721.ownerOf(_tokenId) == _from, "ONFT721: send from incorrect owner");
         _burn(_tokenId);
     }
 

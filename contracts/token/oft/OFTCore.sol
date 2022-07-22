@@ -9,16 +9,8 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 abstract contract OFTCore is NonblockingLzApp, ERC165, IOFTCore {
     constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC165, IERC165)
-        returns (bool)
-    {
-        return
-            interfaceId == type(IOFTCore).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IOFTCore).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function estimateSendFee(
@@ -30,14 +22,7 @@ abstract contract OFTCore is NonblockingLzApp, ERC165, IOFTCore {
     ) public view virtual override returns (uint256 nativeFee, uint256 zroFee) {
         // mock the payload for send()
         bytes memory payload = abi.encode(_toAddress, _amount);
-        return
-            lzEndpoint.estimateFees(
-                _dstChainId,
-                address(this),
-                payload,
-                _useZro,
-                _adapterParams
-            );
+        return lzEndpoint.estimateFees(_dstChainId, address(this), payload, _useZro, _adapterParams);
     }
 
     function sendFrom(
@@ -49,15 +34,7 @@ abstract contract OFTCore is NonblockingLzApp, ERC165, IOFTCore {
         address _zroPaymentAddress,
         bytes memory _adapterParams
     ) public payable virtual override {
-        _send(
-            _from,
-            _dstChainId,
-            _toAddress,
-            _amount,
-            _refundAddress,
-            _zroPaymentAddress,
-            _adapterParams
-        );
+        _send(_from, _dstChainId, _toAddress, _amount, _refundAddress, _zroPaymentAddress, _adapterParams);
     }
 
     function _nonblockingLzReceive(
@@ -67,10 +44,7 @@ abstract contract OFTCore is NonblockingLzApp, ERC165, IOFTCore {
         bytes memory _payload
     ) internal virtual override {
         // decode and load the toAddress
-        (bytes memory toAddressBytes, uint256 amount) = abi.decode(
-            _payload,
-            (bytes, uint256)
-        );
+        (bytes memory toAddressBytes, uint256 amount) = abi.decode(_payload, (bytes, uint256));
         address toAddress;
         assembly {
             toAddress := mload(add(toAddressBytes, 20))
@@ -78,13 +52,7 @@ abstract contract OFTCore is NonblockingLzApp, ERC165, IOFTCore {
 
         _creditTo(_srcChainId, toAddress, amount);
 
-        emit ReceiveFromChain(
-            _srcChainId,
-            _srcAddress,
-            toAddress,
-            amount,
-            _nonce
-        );
+        emit ReceiveFromChain(_srcChainId, _srcAddress, toAddress, amount, _nonce);
     }
 
     function _send(
@@ -99,13 +67,7 @@ abstract contract OFTCore is NonblockingLzApp, ERC165, IOFTCore {
         _debitFrom(_from, _dstChainId, _toAddress, _amount);
 
         bytes memory payload = abi.encode(_toAddress, _amount);
-        _lzSend(
-            _dstChainId,
-            payload,
-            _refundAddress,
-            _zroPaymentAddress,
-            _adapterParams
-        );
+        _lzSend(_dstChainId, payload, _refundAddress, _zroPaymentAddress, _adapterParams);
 
         uint64 nonce = lzEndpoint.getOutboundNonce(_dstChainId, address(this));
         emit SendToChain(_from, _dstChainId, _toAddress, _amount, nonce);

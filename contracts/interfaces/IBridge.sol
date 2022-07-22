@@ -8,7 +8,7 @@ pragma solidity >=0.8.11;
 interface IBridge {
     /**
         @notice Exposing getter for {_domainID} instead of forcing the use of call.
-        @return uint8 The {_domainID} that is currently set for the Bridge contract.
+        @return uint16 The {_domainID} that is currently set for the Bridge contract.
      */
-    function _domainID() external returns (uint8);
+    function _domainID() external returns (uint16);
 }

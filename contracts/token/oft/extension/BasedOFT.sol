@@ -11,13 +11,7 @@ contract BasedOFT is OFT {
         address _lzEndpoint
     ) OFT(_name, _symbol, _lzEndpoint) {}
 
-    function circulatingSupply()
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function circulatingSupply() public view virtual override returns (uint256) {
         unchecked {
             return totalSupply() - balanceOf(address(this));
         }

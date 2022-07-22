@@ -9,16 +9,8 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 abstract contract ONFT1155Core is NonblockingLzApp, ERC165, IONFT1155Core {
     constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC165, IERC165)
-        returns (bool)
-    {
-        return
-            interfaceId == type(IONFT1155Core).interfaceId ||
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IONFT1155Core).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function estimateSendFee(
@@ -49,14 +41,7 @@ abstract contract ONFT1155Core is NonblockingLzApp, ERC165, IONFT1155Core {
         bytes memory _adapterParams
     ) public view virtual override returns (uint256 nativeFee, uint256 zroFee) {
         bytes memory payload = abi.encode(_toAddress, _tokenIds, _amounts);
-        return
-            lzEndpoint.estimateFees(
-                _dstChainId,
-                address(this),
-                payload,
-                _useZro,
-                _adapterParams
-            );
+        return lzEndpoint.estimateFees(_dstChainId, address(this), payload, _useZro, _adapterParams);
     }
 
     function sendFrom(
@@ -116,33 +101,13 @@ abstract contract ONFT1155Core is NonblockingLzApp, ERC165, IONFT1155Core {
         _debitFrom(_from, _dstChainId, _toAddress, _tokenIds, _amounts);
 
         bytes memory payload = abi.encode(_toAddress, _tokenIds, _amounts);
-        _lzSend(
-            _dstChainId,
-            payload,
-            _refundAddress,
-            _zroPaymentAddress,
-            _adapterParams
-        );
+        _lzSend(_dstChainId, payload, _refundAddress, _zroPaymentAddress, _adapterParams);
 
         uint64 nonce = lzEndpoint.getOutboundNonce(_dstChainId, address(this));
         if (_tokenIds.length == 1) {
-            emit SendToChain(
-                _from,
-                _dstChainId,
-                _toAddress,
-                _tokenIds[0],
-                _amounts[0],
-                nonce
-            );
+            emit SendToChain(_from, _dstChainId, _toAddress, _tokenIds[0], _amounts[0], nonce);
         } else if (_tokenIds.length > 1) {
-            emit SendBatchToChain(
-                _from,
-                _dstChainId,
-                _toAddress,
-                _tokenIds,
-                _amounts,
-                nonce
-            );
+            emit SendBatchToChain(_from, _dstChainId, _toAddress, _tokenIds, _amounts, nonce);
         }
     }
 
@@ -153,11 +118,10 @@ abstract contract ONFT1155Core is NonblockingLzApp, ERC165, IONFT1155Core {
         bytes memory _payload
     ) internal virtual override {
         // decode and load the toAddress
-        (
-            bytes memory toAddressBytes,
-            uint256[] memory tokenIds,
-            uint256[] memory amounts
-        ) = abi.decode(_payload, (bytes, uint256[], uint256[]));
+        (bytes memory toAddressBytes, uint256[] memory tokenIds, uint256[] memory amounts) = abi.decode(
+            _payload,
+            (bytes, uint256[], uint256[])
+        );
         address toAddress;
         assembly {
             toAddress := mload(add(toAddressBytes, 20))
@@ -166,23 +130,9 @@ abstract contract ONFT1155Core is NonblockingLzApp, ERC165, IONFT1155Core {
         _creditTo(_srcChainId, toAddress, tokenIds, amounts);
 
         if (tokenIds.length == 1) {
-            emit ReceiveFromChain(
-                _srcChainId,
-                _srcAddress,
-                toAddress,
-                tokenIds[0],
-                amounts[0],
-                _nonce
-            );
+            emit ReceiveFromChain(_srcChainId, _srcAddress, toAddress, tokenIds[0], amounts[0], _nonce);
         } else if (tokenIds.length > 1) {
-            emit ReceiveBatchFromChain(
-                _srcChainId,
-                _srcAddress,
-                toAddress,
-                tokenIds,
-                amounts,
-                _nonce
-            );
+            emit ReceiveBatchFromChain(_srcChainId, _srcAddress, toAddress, tokenIds, amounts, _nonce);
         }
     }
 
@@ -201,11 +151,7 @@ abstract contract ONFT1155Core is NonblockingLzApp, ERC165, IONFT1155Core {
         uint256[] memory _amounts
     ) internal virtual;
 
-    function _toSingletonArray(uint256 element)
-        internal
-        pure
-        returns (uint256[] memory)
-    {
+    function _toSingletonArray(uint256 element) internal pure returns (uint256[] memory) {
         uint256[] memory array = new uint256[](1);
         array[0] = element;
         return array;

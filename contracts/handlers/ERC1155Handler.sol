@@ -9,12 +9,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 
-contract ERC1155Handler is
-    IDepositExecute,
-    HandlerHelpers,
-    ERC1155Safe,
-    ERC1155Holder
-{
+contract ERC1155Handler is IDepositExecute, HandlerHelpers, ERC1155Safe, ERC1155Holder {
     using ERC165Checker for address;
 
     bytes4 private constant _INTERFACE_ERC1155_METADATA = 0x0e89341c;
@@ -42,22 +37,12 @@ contract ERC1155Handler is
         (tokenIDs, amounts) = abi.decode(data, (uint256[], uint256[]));
 
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
-        require(
-            tokenAddress != address(0),
-            "provided resourceID does not exist"
-        );
+        require(tokenAddress != address(0), "provided resourceID does not exist");
 
         if (_burnList[tokenAddress]) {
             burnBatchERC1155(tokenAddress, depositer, tokenIDs, amounts);
         } else {
-            lockBatchERC1155(
-                tokenAddress,
-                depositer,
-                address(this),
-                tokenIDs,
-                amounts,
-                EMPTY_BYTES
-            );
+            lockBatchERC1155(tokenAddress, depositer, address(this), tokenIDs, amounts, EMPTY_BYTES);
         }
     }
 
@@ -67,20 +52,13 @@ contract ERC1155Handler is
         @param data Consists of ABI-encoded {tokenIDs}, {amounts}, {recipient},
         and {transferData} of types uint[], uint[], bytes, bytes.
      */
-    function executeProposal(bytes32 resourceID, bytes calldata data)
-        external
-        override
-        onlyBridge
-    {
+    function executeProposal(bytes32 resourceID, bytes calldata data) external override onlyBridge {
         uint256[] memory tokenIDs;
         uint256[] memory amounts;
         bytes memory recipient;
         bytes memory transferData;
 
-        (tokenIDs, amounts, recipient, transferData) = abi.decode(
-            data,
-            (uint256[], uint256[], bytes, bytes)
-        );
+        (tokenIDs, amounts, recipient, transferData) = abi.decode(data, (uint256[], uint256[], bytes, bytes));
 
         bytes20 recipientAddress;
 
@@ -89,19 +67,10 @@ contract ERC1155Handler is
         }
 
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
-        require(
-            _contractWhitelist[address(tokenAddress)],
-            "provided tokenAddress is not whitelisted"
-        );
+        require(_contractWhitelist[address(tokenAddress)], "provided tokenAddress is not whitelisted");
 
         if (_burnList[tokenAddress]) {
-            mintBatchERC1155(
-                tokenAddress,
-                address(recipientAddress),
-                tokenIDs,
-                amounts,
-                transferData
-            );
+            mintBatchERC1155(tokenAddress, address(recipientAddress), tokenIDs, amounts, transferData);
         } else {
             releaseBatchERC1155(
                 tokenAddress,
@@ -131,13 +100,6 @@ contract ERC1155Handler is
             (address, address, uint256[], uint256[], bytes)
         );
 
-        releaseBatchERC1155(
-            tokenAddress,
-            address(this),
-            recipient,
-            tokenIDs,
-            amounts,
-            transferData
-        );
+        releaseBatchERC1155(tokenAddress, address(this), recipient, tokenIDs, amounts, transferData);
     }
 }

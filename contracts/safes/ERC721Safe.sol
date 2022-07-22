@@ -60,9 +60,7 @@ contract ERC721Safe {
         uint256 tokenID,
         bytes memory data
     ) internal {
-        ERC721MinterBurnerPauser erc721 = ERC721MinterBurnerPauser(
-            tokenAddress
-        );
+        ERC721MinterBurnerPauser erc721 = ERC721MinterBurnerPauser(tokenAddress);
         erc721.mint(recipient, tokenID, string(data));
     }
 
@@ -72,9 +70,7 @@ contract ERC721Safe {
         @param tokenID ID of token to burn.
      */
     function burnERC721(address tokenAddress, uint256 tokenID) internal {
-        ERC721MinterBurnerPauser erc721 = ERC721MinterBurnerPauser(
-            tokenAddress
-        );
+        ERC721MinterBurnerPauser erc721 = ERC721MinterBurnerPauser(tokenAddress);
         erc721.burn(tokenID);
     }
 }

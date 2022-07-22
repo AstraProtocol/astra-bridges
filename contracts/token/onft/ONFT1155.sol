@@ -9,10 +9,7 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 // NOTE: this ONFT contract has no public minting logic.
 // must implement your own minting logic in child classes
 contract ONFT1155 is ONFT1155Core, ERC1155, IONFT1155 {
-    constructor(string memory _uri, address _lzEndpoint)
-        ERC1155(_uri)
-        ONFT1155Core(_lzEndpoint)
-    {}
+    constructor(string memory _uri, address _lzEndpoint) ERC1155(_uri) ONFT1155Core(_lzEndpoint) {}
 
     function supportsInterface(bytes4 interfaceId)
         public
@@ -21,9 +18,7 @@ contract ONFT1155 is ONFT1155Core, ERC1155, IONFT1155 {
         override(ONFT1155Core, ERC1155, IERC165)
         returns (bool)
     {
-        return
-            interfaceId == type(IONFT1155).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId == type(IONFT1155).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function _debitFrom(

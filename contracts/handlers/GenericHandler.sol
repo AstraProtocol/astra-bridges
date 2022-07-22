@@ -19,16 +19,13 @@ contract GenericHandler is IGenericHandler {
     mapping(address => bytes32) public _contractAddressToResourceID;
 
     // contract address => deposit function signature
-    mapping(address => bytes4)
-        public _contractAddressToDepositFunctionSignature;
+    mapping(address => bytes4) public _contractAddressToDepositFunctionSignature;
 
     // contract address => depositer address position offset in the metadata
-    mapping(address => uint256)
-        public _contractAddressToDepositFunctionDepositerOffset;
+    mapping(address => uint256) public _contractAddressToDepositFunctionDepositerOffset;
 
     // contract address => execute proposal function signature
-    mapping(address => bytes4)
-        public _contractAddressToExecuteFunctionSignature;
+    mapping(address => bytes4) public _contractAddressToExecuteFunctionSignature;
 
     // token contract address => is whitelisted
     mapping(address => bool) public _contractWhitelist;
@@ -105,38 +102,24 @@ contract GenericHandler is IGenericHandler {
         metadata = bytes(data[32:32 + lenMetadata]);
 
         address contractAddress = _resourceIDToContractAddress[resourceID];
-        uint256 depositerOffset = _contractAddressToDepositFunctionDepositerOffset[
-                contractAddress
-            ];
+        uint256 depositerOffset = _contractAddressToDepositFunctionDepositerOffset[contractAddress];
         if (depositerOffset > 0) {
             uint256 metadataDepositer;
             // Skipping 32 bytes of length prefix and depositerOffset bytes.
             assembly {
-                metadataDepositer := mload(
-                    add(add(metadata, 32), depositerOffset)
-                )
+                metadataDepositer := mload(add(add(metadata, 32), depositerOffset))
             }
             // metadataDepositer contains 0xdepositerAddressdepositerAddressdeposite************************
             // Shift it 12 bytes right:   0x000000000000000000000000depositerAddressdepositerAddressdeposite
-            require(
-                depositer == address(uint160(metadataDepositer >> 96)),
-                "incorrect depositer in the data"
-            );
+            require(depositer == address(uint160(metadataDepositer >> 96)), "incorrect depositer in the data");
         }
 
-        require(
-            _contractWhitelist[contractAddress],
-            "provided contractAddress is not whitelisted"
-        );
+        require(_contractWhitelist[contractAddress], "provided contractAddress is not whitelisted");
 
-        bytes4 sig = _contractAddressToDepositFunctionSignature[
-            contractAddress
-        ];
+        bytes4 sig = _contractAddressToDepositFunctionSignature[contractAddress];
         if (sig != bytes4(0)) {
             bytes memory callData = abi.encodePacked(sig, metadata);
-            (bool success, bytes memory handlerResponse) = contractAddress.call(
-                callData
-            );
+            (bool success, bytes memory handlerResponse) = contractAddress.call(callData);
             require(success, "call to contractAddress failed");
             return handlerResponse;
         }
@@ -152,10 +135,7 @@ contract GenericHandler is IGenericHandler {
         @notice If {_contractAddressToExecuteFunctionSignature}[{contractAddress}] is set,
         {metaData} is expected to consist of needed function arguments.
      */
-    function executeProposal(bytes32 resourceID, bytes calldata data)
-        external
-        onlyBridge
-    {
+    function executeProposal(bytes32 resourceID, bytes calldata data) external onlyBridge {
         uint256 lenMetadata;
         bytes memory metaData;
 
@@ -163,14 +143,9 @@ contract GenericHandler is IGenericHandler {
         metaData = bytes(data[32:32 + lenMetadata]);
 
         address contractAddress = _resourceIDToContractAddress[resourceID];
-        require(
-            _contractWhitelist[contractAddress],
-            "provided contractAddress is not whitelisted"
-        );
+        require(_contractWhitelist[contractAddress], "provided contractAddress is not whitelisted");
 
-        bytes4 sig = _contractAddressToExecuteFunctionSignature[
-            contractAddress
-        ];
+        bytes4 sig = _contractAddressToExecuteFunctionSignature[contractAddress];
         if (sig != bytes4(0)) {
             bytes memory callData = abi.encodePacked(sig, metaData);
             (bool success, ) = contractAddress.call(callData);
@@ -187,15 +162,9 @@ contract GenericHandler is IGenericHandler {
     ) internal {
         _resourceIDToContractAddress[resourceID] = contractAddress;
         _contractAddressToResourceID[contractAddress] = resourceID;
-        _contractAddressToDepositFunctionSignature[
-            contractAddress
-        ] = depositFunctionSig;
-        _contractAddressToDepositFunctionDepositerOffset[
-            contractAddress
-        ] = depositFunctionDepositerOffset;
-        _contractAddressToExecuteFunctionSignature[
-            contractAddress
-        ] = executeFunctionSig;
+        _contractAddressToDepositFunctionSignature[contractAddress] = depositFunctionSig;
+        _contractAddressToDepositFunctionDepositerOffset[contractAddress] = depositFunctionDepositerOffset;
+        _contractAddressToExecuteFunctionSignature[contractAddress] = executeFunctionSig;
 
         _contractWhitelist[contractAddress] = true;
     }

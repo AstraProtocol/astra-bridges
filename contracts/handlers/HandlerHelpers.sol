@@ -48,11 +48,7 @@ contract HandlerHelpers is IERCHandler {
         @param resourceID ResourceID to be used when making deposits.
         @param contractAddress Address of contract to be called when a deposit is made and a deposited is executed.
      */
-    function setResource(bytes32 resourceID, address contractAddress)
-        external
-        override
-        onlyBridge
-    {
+    function setResource(bytes32 resourceID, address contractAddress) external override onlyBridge {
         _setResource(resourceID, contractAddress);
     }
 
@@ -67,9 +63,7 @@ contract HandlerHelpers is IERCHandler {
 
     function withdraw(bytes memory data) external virtual override {}
 
-    function _setResource(bytes32 resourceID, address contractAddress)
-        internal
-    {
+    function _setResource(bytes32 resourceID, address contractAddress) internal {
         _resourceIDToTokenContractAddress[resourceID] = contractAddress;
         _tokenContractAddressToResourceID[contractAddress] = resourceID;
 
@@ -77,10 +71,7 @@ contract HandlerHelpers is IERCHandler {
     }
 
     function _setBurnable(address contractAddress) internal {
-        require(
-            _contractWhitelist[contractAddress],
-            "provided contract is not whitelisted"
-        );
+        require(_contractWhitelist[contractAddress], "provided contract is not whitelisted");
         _burnList[contractAddress] = true;
     }
 }

@@ -14,13 +14,7 @@ contract ProxyOFT is OFTCore {
         token = IERC20(_proxyToken);
     }
 
-    function circulatingSupply()
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function circulatingSupply() public view virtual override returns (uint256) {
         unchecked {
             return token.totalSupply() - token.balanceOf(address(this));
         }

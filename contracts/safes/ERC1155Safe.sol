@@ -32,13 +32,7 @@ contract ERC1155Safe {
         bytes memory data
     ) internal {
         IERC1155 erc1155 = IERC1155(tokenAddress);
-        erc1155.safeBatchTransferFrom(
-            owner,
-            recipient,
-            tokenIDs,
-            amounts,
-            data
-        );
+        erc1155.safeBatchTransferFrom(owner, recipient, tokenIDs, amounts, data);
     }
 
     /**
@@ -59,13 +53,7 @@ contract ERC1155Safe {
         bytes memory data
     ) internal {
         IERC1155 erc1155 = IERC1155(tokenAddress);
-        erc1155.safeBatchTransferFrom(
-            owner,
-            recipient,
-            tokenIDs,
-            amounts,
-            data
-        );
+        erc1155.safeBatchTransferFrom(owner, recipient, tokenIDs, amounts, data);
     }
 
     /**
@@ -83,9 +71,7 @@ contract ERC1155Safe {
         uint256[] memory amounts,
         bytes memory data
     ) internal {
-        ERC1155PresetMinterPauser erc1155 = ERC1155PresetMinterPauser(
-            tokenAddress
-        );
+        ERC1155PresetMinterPauser erc1155 = ERC1155PresetMinterPauser(tokenAddress);
         erc1155.mintBatch(recipient, tokenIDs, amounts, data);
     }
 

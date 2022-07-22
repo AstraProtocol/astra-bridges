@@ -6,9 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 // for mock purposes only, no limit on minting functionality
 contract ERC721Mock is ERC721 {
-    constructor(string memory _name, string memory _symbol)
-        ERC721(_name, _symbol)
-    {}
+    constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {}
 
     string public baseTokenURI;
 
@@ -20,12 +18,7 @@ contract ERC721Mock is ERC721 {
         _safeTransfer(msg.sender, to, tokenId, "");
     }
 
-    function isApprovedOrOwner(address spender, uint256 tokenId)
-        public
-        view
-        virtual
-        returns (bool)
-    {
+    function isApprovedOrOwner(address spender, uint256 tokenId) public view virtual returns (bool) {
         return _isApprovedOrOwner(spender, tokenId);
     }
 }

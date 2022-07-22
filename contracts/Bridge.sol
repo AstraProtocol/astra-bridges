@@ -3,37 +3,24 @@ pragma solidity >=0.8.11;
 pragma experimental ABIEncoderV2;
 
 import "./utils/AccessControl.sol";
-import "./utils/Pausable.sol";
-import "./utils/SafeMath.sol";
 import "./utils/SafeCast.sol";
 import "./interfaces/IDepositExecute.sol";
 import "./interfaces/IERCHandler.sol";
 import "./interfaces/IGenericHandler.sol";
 
 /**
-    @title Facilitates deposits, creation and voting of deposit proposals, and deposit executions.
-    @author ChainSafe Systems.
+    @author Astra Protocol
  */
-contract Bridge is Pausable, AccessControl, SafeMath {
+contract Bridge is NonblockingLzApp, AccessControl {
     using SafeCast for *;
 
     uint16 public _chainID;
-    address public _lzEndpoint;
 
     // destinationDomainID => number of deposits
-    mapping(uint8 => uint64) public _depositCounts;
+    mapping(uint16 => uint64) public _depositCounts;
 
     // resourceID => handler address
     mapping(bytes32 => address) public _resourceIDToHandlerAddress;
-
-    event Deposit(
-        uint8 destinationDomainID,
-        bytes32 resourceID,
-        uint64 depositNonce,
-        address indexed user,
-        bytes data,
-        bytes handlerResponse
-    );
 
     bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
 
@@ -43,10 +30,7 @@ contract Bridge is Pausable, AccessControl, SafeMath {
     }
 
     function _onlyAdmin() private view {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
-            "sender doesn't have admin role"
-        );
+        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "sender doesn't have admin role");
     }
 
     function _msgSender() internal view override returns (address) {
@@ -60,26 +44,108 @@ contract Bridge is Pausable, AccessControl, SafeMath {
     }
 
     /**
-        @notice Initializes Bridge, creates and grants {_msgSender()} the admin role,
-        creates and grants {initialRelayers} the relayer role.
+        @notice Initializes Bridge, creates and grants {_msgSender()} the admin role
         @param chainID ID of chain the Bridge contract exists on.
         @param lzEndpoint LayerZero endpoint
      */
-    constructor(
-        uint16 chainID,
-        address lzEndpoint
-    ) public {
+    constructor(uint16 chainID, address _lzEndpoint) public NonblockingLzApp(_lzEndpoint) {
         _chainID = chainID;
-        _lzEndpoint = lzEndpoint;
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     /**
-        @notice Returns lzEndpoint
+        @notice Override for estimate send fees for current chain to dst chain
+        @param _dstChainId ID of chain to send
+        @param _toAddress to dst address
+        @param _amount amount to send
+        @param _useZro use Zro?
+        @param _adapterParams additional params
      */
-    function lzEndpoint() external view returns (address) {
-        return _lzEndpoint;
+    function estimateSendFee(
+        uint16 _dstChainId,
+        bytes memory _toAddress,
+        uint256 _amount,
+        bool _useZro,
+        bytes memory _adapterParams
+    ) public view virtual override returns (uint256 nativeFee, uint256 zroFee) {
+        // mock the payload for send()
+        bytes memory payload = abi.encode(_toAddress, _amount);
+        return lzEndpoint.estimateFees(_dstChainId, address(this), payload, _useZro, _adapterParams);
+    }
+
+    function sendFrom(
+        address _from,
+        uint16 _dstChainId,
+        bytes memory _toAddress,
+        uint256 _amount,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes memory _adapterParams
+    ) public payable virtual override {
+        _send(
+            _from,
+            _dstChainId,
+            tokenAddress,
+            _toAddress,
+            _amount,
+            _refundAddress,
+            _zroPaymentAddress,
+            _adapterParams
+        );
+    }
+
+    function _nonblockingLzReceive(
+        uint16 _srcChainId,
+        bytes memory _srcAddress,
+        uint64 _nonce,
+        bytes memory _payload
+    ) internal virtual override {
+        // decode and load the toAddress
+        (bytes memory toAddressBytes, bytes32 resourceID, address tokenAddress, uint256 amount) = abi.decode(
+            _payload,
+            (bytes, bytes32, uint256)
+        );
+        address toAddress;
+        assembly {
+            toAddress := mload(add(toAddressBytes, 20))
+        }
+
+        address handlerAddress = _resourceIDToHandlerAddress[resourceID];
+        IERCHandler handler = IERCHandler(handlerAddress);
+        handler.withdraw(abi.encode(tokenAddress, toAddress, amount));
+
+        emit ReceiveFromChain(_srcChainId, _srcAddress, toAddress, amount, _nonce);
+    }
+
+    function _send(
+        address _from,
+        uint16 _dstChainId,
+        bytes memory _toAddress,
+        uint256 _amount,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes memory _adapterParams
+    ) internal virtual {
+        // First get resource handler ID
+        bytes32 resourceID = abi.decode(_adapterParams, (bytes32));
+
+        // And verify
+        address handlerAddress = _resourceIDToHandlerAddress[resourceID];
+        require(handlerAddress != address(0), "resourceID not mapped to handler");
+
+        // Get handler from map
+        IERCHandler handler = IERCHandler(handlerAddress);
+
+        // Trigger deposit from handler
+        handler.deposit(resourceID, _from, abi.encode(_amount));
+
+        // Pack data for send
+        (payload) = abi.encode(_toAddress, _amount);
+        _lzSend(_dstChainId, payload, _refundAddress, _zroPaymentAddress, _adapterParams);
+
+        uint64 nonce = lzEndpoint.getOutboundNonce(_dstChainId, address(this));
+        emit SendToChain(_from, _dstChainId, _toAddress, _amount, nonce);
     }
 
     /**
@@ -169,10 +235,7 @@ contract Bridge is Pausable, AccessControl, SafeMath {
         @param handlerAddress Address of handler resource will be set for.
         @param tokenAddress Address of contract to be called when a deposit is made and a deposited is executed.
      */
-    function adminSetBurnable(address handlerAddress, address tokenAddress)
-        external
-        onlyAdmin
-    {
+    function adminSetBurnable(address handlerAddress, address tokenAddress) external onlyAdmin {
         IERCHandler handler = IERCHandler(handlerAddress);
         handler.setBurnable(tokenAddress);
     }
@@ -183,14 +246,8 @@ contract Bridge is Pausable, AccessControl, SafeMath {
         @param domainID Domain ID for increasing nonce.
         @param nonce The nonce value to be set.
      */
-    function adminSetDepositNonce(uint8 domainID, uint64 nonce)
-        external
-        onlyAdmin
-    {
-        require(
-            nonce > _depositCounts[domainID],
-            "Does not allow decrements of the nonce"
-        );
+    function adminSetDepositNonce(uint16 domainID, uint64 nonce) external onlyAdmin {
+        require(nonce > _depositCounts[domainID], "Does not allow decrements of the nonce");
         _depositCounts[domainID] = nonce;
     }
 
@@ -207,10 +264,7 @@ contract Bridge is Pausable, AccessControl, SafeMath {
         @param handlerAddress Address of handler to withdraw from.
         @param data ABI-encoded withdrawal params relevant to the specified handler.
      */
-    function adminWithdraw(address handlerAddress, bytes memory data)
-        external
-        onlyAdmin
-    {
+    function adminWithdraw(address handlerAddress, bytes memory data) external onlyAdmin {
         IERCHandler handler = IERCHandler(handlerAddress);
         handler.withdraw(data);
     }
@@ -227,10 +281,10 @@ contract Bridge is Pausable, AccessControl, SafeMath {
         - GenericHandler: responds with the raw bytes returned from the call to the target contract.
      */
     function deposit(
-        uint8 destinationDomainID,
+        uint16 destinationDomainID,
         bytes32 resourceID,
         bytes calldata data
-    ) external payable whenNotPaused {
+    ) external payable {
         address handler = _resourceIDToHandlerAddress[resourceID];
         require(handler != address(0), "resourceID not mapped to handler");
 
@@ -238,20 +292,7 @@ contract Bridge is Pausable, AccessControl, SafeMath {
         address sender = _msgSender();
 
         IDepositExecute depositHandler = IDepositExecute(handler);
-        bytes memory handlerResponse = depositHandler.deposit(
-            resourceID,
-            sender,
-            data
-        );
-
-        emit Deposit(
-            destinationDomainID,
-            resourceID,
-            depositNonce,
-            sender,
-            data,
-            handlerResponse
-        );
+        bytes memory handlerResponse = depositHandler.deposit(resourceID, sender, data);
     }
 
     /**
@@ -267,7 +308,13 @@ contract Bridge is Pausable, AccessControl, SafeMath {
         @notice Emits {ProposalEvent} event with status {Executed}.
         @notice Emits {FailedExecution} event with the failed reason.
      */
-    function executeProposal(uint8 domainID, uint64 depositNonce, bytes calldata data, bytes32 resourceID, bool revertOnFail) public onlyRelayers whenNotPaused {
+    function executeProposal(
+        uint16 domainID,
+        uint64 depositNonce,
+        bytes calldata data,
+        bytes32 resourceID,
+        bool revertOnFail
+    ) public onlyRelayers {
         address handler = _resourceIDToHandlerAddress[resourceID];
         uint72 nonceAndID = (uint72(depositNonce) << 8) | uint72(domainID);
         bytes32 dataHash = keccak256(abi.encodePacked(handler, data));
@@ -281,14 +328,13 @@ contract Bridge is Pausable, AccessControl, SafeMath {
         if (revertOnFail) {
             depositHandler.executeProposal(resourceID, data);
         } else {
-            try depositHandler.executeProposal(resourceID, data) {
-            } catch (bytes memory lowLevelData) {
+            try depositHandler.executeProposal(resourceID, data) {} catch (bytes memory lowLevelData) {
                 proposal._status = ProposalStatus.Passed;
                 emit FailedHandlerExecution(lowLevelData);
                 return;
             }
         }
-        
+
         emit ProposalEvent(domainID, depositNonce, ProposalStatus.Executed, dataHash);
     }
 
@@ -298,10 +344,7 @@ contract Bridge is Pausable, AccessControl, SafeMath {
         @param addrs Array of addresses to transfer {amounts} to.
         @param amounts Array of amonuts to transfer to {addrs}.
      */
-    function transferFunds(
-        address payable[] calldata addrs,
-        uint256[] calldata amounts
-    ) external onlyAdmin {
+    function transferFunds(address payable[] calldata addrs, uint256[] calldata amounts) external onlyAdmin {
         for (uint256 i = 0; i < addrs.length; i++) {
             addrs[i].transfer(amounts[i]);
         }

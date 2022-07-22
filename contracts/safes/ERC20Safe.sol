@@ -87,10 +87,7 @@ contract ERC20Safe {
         address to,
         uint256 value
     ) private {
-        _safeCall(
-            token,
-            abi.encodeWithSelector(token.transfer.selector, to, value)
-        );
+        _safeCall(token, abi.encodeWithSelector(token.transfer.selector, to, value));
     }
 
     /**
@@ -106,10 +103,7 @@ contract ERC20Safe {
         address to,
         uint256 value
     ) private {
-        _safeCall(
-            token,
-            abi.encodeWithSelector(token.transferFrom.selector, from, to, value)
-        );
+        _safeCall(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value));
     }
 
     /**
@@ -128,10 +122,7 @@ contract ERC20Safe {
         require(success, "ERC20: call failed");
 
         if (returndata.length > 0) {
-            require(
-                abi.decode(returndata, (bool)),
-                "ERC20: operation did not succeed"
-            );
+            require(abi.decode(returndata, (bool)), "ERC20: operation did not succeed");
         }
     }
 }

@@ -28,10 +28,7 @@ contract UniversalONFT721 is ONFT721 {
 
     /// @notice Mint your ONFT
     function mint() external payable {
-        require(
-            nextMintId <= maxMintId,
-            "UniversalONFT721: max mint limit reached"
-        );
+        require(nextMintId <= maxMintId, "UniversalONFT721: max mint limit reached");
 
         uint256 newId = nextMintId;
         nextMintId++;
