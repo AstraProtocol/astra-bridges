@@ -3,7 +3,7 @@ pragma solidity >=0.8.11;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./ERC721MinterBurnerPauser.sol";
+import "../token/ERC721MinterBurnerPauser.sol";
 
 /**
     @title Manages deposited ERC721s.

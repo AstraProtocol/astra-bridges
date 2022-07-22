@@ -4,14 +4,17 @@ pragma experimental ABIEncoderV2;
 
 import "./utils/AccessControl.sol";
 import "./utils/SafeCast.sol";
+import "./utils/Pausable.sol";
 import "./interfaces/IDepositExecute.sol";
 import "./interfaces/IERCHandler.sol";
 import "./interfaces/IGenericHandler.sol";
+import "./lzApp/NonblockingLzApp.sol";
 
 /**
+    @title Manages by roles and implement NonblockingLzApp
     @author Astra Protocol
  */
-contract Bridge is NonblockingLzApp, AccessControl {
+contract Bridge is NonblockingLzApp, AccessControl, Pausable {
     using SafeCast for *;
 
     uint16 public _chainID;
@@ -23,6 +26,30 @@ contract Bridge is NonblockingLzApp, AccessControl {
     mapping(bytes32 => address) public _resourceIDToHandlerAddress;
 
     bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
+
+    /**
+     * @dev Emitted when `_amount` tokens are moved from the `_sender` to (`_dstChainId`, `_toAddress`)
+     * `_nonce` is the outbound nonce
+     */
+    event SendToChain(
+        address indexed _sender,
+        uint16 indexed _dstChainId,
+        bytes indexed _toAddress,
+        uint256 _amount,
+        uint64 _nonce
+    );
+
+    /**
+     * @dev Emitted when `_amount` tokens are received from `_srcChainId` into the `_toAddress` on the local chain.
+     * `_nonce` is the inbound nonce.
+     */
+    event ReceiveFromChain(
+        uint16 indexed _srcChainId,
+        bytes indexed _srcAddress,
+        address indexed _toAddress,
+        uint256 _amount,
+        uint64 _nonce
+    );
 
     modifier onlyAdmin() {
         _onlyAdmin();
@@ -46,9 +73,9 @@ contract Bridge is NonblockingLzApp, AccessControl {
     /**
         @notice Initializes Bridge, creates and grants {_msgSender()} the admin role
         @param chainID ID of chain the Bridge contract exists on.
-        @param lzEndpoint LayerZero endpoint
+        @param _lzEndpoint LayerZero endpoint
      */
-    constructor(uint16 chainID, address _lzEndpoint) public NonblockingLzApp(_lzEndpoint) {
+    constructor(uint16 chainID, address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {
         _chainID = chainID;
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -68,7 +95,7 @@ contract Bridge is NonblockingLzApp, AccessControl {
         uint256 _amount,
         bool _useZro,
         bytes memory _adapterParams
-    ) public view virtual override returns (uint256 nativeFee, uint256 zroFee) {
+    ) public view virtual returns (uint256 nativeFee, uint256 zroFee) {
         // mock the payload for send()
         bytes memory payload = abi.encode(_toAddress, _amount);
         return lzEndpoint.estimateFees(_dstChainId, address(this), payload, _useZro, _adapterParams);
@@ -82,17 +109,8 @@ contract Bridge is NonblockingLzApp, AccessControl {
         address payable _refundAddress,
         address _zroPaymentAddress,
         bytes memory _adapterParams
-    ) public payable virtual override {
-        _send(
-            _from,
-            _dstChainId,
-            tokenAddress,
-            _toAddress,
-            _amount,
-            _refundAddress,
-            _zroPaymentAddress,
-            _adapterParams
-        );
+    ) public payable virtual whenNotPaused {
+        _send(_from, _dstChainId, _toAddress, _amount, _refundAddress, _zroPaymentAddress, _adapterParams);
     }
 
     function _nonblockingLzReceive(
@@ -115,7 +133,7 @@ contract Bridge is NonblockingLzApp, AccessControl {
         address handlerAddress = _resourceIDToHandlerAddress[resourceID];
         IDepositExecute handler = IDepositExecute(handlerAddress);
         // Pack data for execute
-        (data) = abi.encode(amount, uint256(1), toAddress);
+        bytes memory data = abi.encode(amount, uint256(1), toAddress);
         handler.executeProposal(resourceID, data);
 
         emit ReceiveFromChain(_srcChainId, _srcAddress, toAddress, amount, _nonce);
@@ -144,7 +162,7 @@ contract Bridge is NonblockingLzApp, AccessControl {
         bytes memory handlerResponse = depositHandler.deposit(resourceID, sender, abi.encode(_amount));
 
         // Pack data for send via LayerZero: {dstAddress,resourceID,amount}
-        (payload) = abi.encode(_toAddress, resourceID, _amount);
+        bytes memory payload = abi.encode(_toAddress, resourceID, _amount);
         _lzSend(_dstChainId, payload, _refundAddress, _zroPaymentAddress, _adapterParams);
 
         uint64 nonce = lzEndpoint.getOutboundNonce(_dstChainId, address(this));
