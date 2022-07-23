@@ -16,3 +16,14 @@ task(
   .addParam('bridge', 'Bridge contract address')
   .addParam('handler', 'Handler address')
   .addParam('tokenContract', 'Token contract to be registered');
+
+task(
+  'setTrustedRemote',
+  'Set a bridge contract trusted remote',
+  require('./set-trusted-remote')
+)
+  .addParam('targetChainId', 'Trusted chain id')
+  .addParam(
+    'targetBridgeAddress',
+    'Target chain contract address to be trusted'
+  );
