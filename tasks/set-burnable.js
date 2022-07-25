@@ -1,4 +1,4 @@
-const { waitForTx, setupArgs } = require('./utils');
+const { setupArgs } = require('./utils');
 
 /**
  *
@@ -16,5 +16,5 @@ module.exports = async function (taskArgs, hre) {
     { gasPrice: taskArgs.gasPrice, gasLimit: taskArgs.gasLimit }
   );
 
-  await waitForTx(args.provider, tx.hash);
+  await tx.wait();
 };

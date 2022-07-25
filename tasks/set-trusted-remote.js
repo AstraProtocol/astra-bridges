@@ -1,4 +1,4 @@
-const { waitForTx, setupArgs } = require('./utils');
+const { setupArgs } = require('./utils');
 
 /**
  *
@@ -15,5 +15,5 @@ module.exports = async function (taskArgs, hre) {
     taskArgs.targetBridgeAddress
   );
 
-  await waitForTx(args.provider, tx.hash);
+  await tx.wait();
 };

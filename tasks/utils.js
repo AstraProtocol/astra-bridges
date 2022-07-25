@@ -34,18 +34,6 @@ function getDeploymentAddresses(networkName) {
 }
 
 /**
- * 
- * @param {import('hardhat/types').EthereumProvider} provider 
- * @param {string} hash 
- */
-const waitForTx = async (provider, hash) => {
-  console.log(`Waiting for tx: ${hash}...`);
-  while (!(await provider.getTransactionReceipt(hash))) {
-    sleep(5000);
-  }
-};
-
-/**
  *
  * @param {any} args args to setup
  * @param {import('hardhat')} hre hardhat runtime env
