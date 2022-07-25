@@ -6,6 +6,7 @@ import "./utils/AccessControl.sol";
 import "./utils/SafeCast.sol";
 import "./utils/Pausable.sol";
 import "./interfaces/IDepositExecute.sol";
+import "./interfaces/IBridge.sol";
 import "./interfaces/IERCHandler.sol";
 import "./interfaces/IGenericHandler.sol";
 import "./lzApp/NonblockingLzApp.sol";
@@ -14,7 +15,7 @@ import "./lzApp/NonblockingLzApp.sol";
     @title Manages by roles and implement NonblockingLzApp
     @author Astra Protocol
  */
-contract Bridge is NonblockingLzApp, AccessControl, Pausable {
+contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
     using SafeCast for *;
 
     uint16 public _chainID;
@@ -26,30 +27,6 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable {
     mapping(bytes32 => address) public _resourceIDToHandlerAddress;
 
     bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
-
-    /**
-     * @dev Emitted when `_amount` tokens are moved from the `_sender` to (`_dstChainId`, `_toAddress`)
-     * `_nonce` is the outbound nonce
-     */
-    event SendToChain(
-        address indexed _sender,
-        uint16 indexed _dstChainId,
-        bytes indexed _toAddress,
-        uint256 _amount,
-        uint64 _nonce
-    );
-
-    /**
-     * @dev Emitted when `_amount` tokens are received from `_srcChainId` into the `_toAddress` on the local chain.
-     * `_nonce` is the inbound nonce.
-     */
-    event ReceiveFromChain(
-        uint16 indexed _srcChainId,
-        bytes indexed _srcAddress,
-        address indexed _toAddress,
-        uint256 _amount,
-        uint64 _nonce
-    );
 
     modifier onlyAdmin() {
         _onlyAdmin();
@@ -80,6 +57,10 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable {
 
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
+    
+    function chainID() external virtual override returns (uint16) {
+        return _chainID;
+    }
 
     /**
         @notice Override for estimate send fees for current chain to dst chain
@@ -101,8 +82,7 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable {
         return lzEndpoint.estimateFees(_dstChainId, address(this), payload, _useZro, _adapterParams);
     }
 
-    function sendFrom(
-        address _from,
+    function sendToChain(
         uint16 _dstChainId,
         bytes memory _toAddress,
         uint256 _amount,
@@ -110,7 +90,25 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable {
         address _zroPaymentAddress,
         bytes memory _adapterParams
     ) public payable virtual whenNotPaused {
-        _send(_from, _dstChainId, _toAddress, _amount, _refundAddress, _zroPaymentAddress, _adapterParams);
+        address sender = _msgSender();
+
+        // First get resource handler ID
+        bytes32 resourceID = abi.decode(_adapterParams, (bytes32));
+
+        // And verify
+        address handlerAddress = _resourceIDToHandlerAddress[resourceID];
+        require(handlerAddress != address(0), "resourceID not mapped to handler");
+
+        // Get handler and execute
+        IDepositExecute depositHandler = IDepositExecute(handlerAddress);
+        bytes memory handlerResponse = depositHandler.deposit(resourceID, sender, abi.encode(_amount));
+
+        // Pack data for send via LayerZero: {dstAddress,resourceID,amount}
+        bytes memory payload = abi.encode(_toAddress, resourceID, _amount);
+        _lzSend(_dstChainId, payload, _refundAddress, _zroPaymentAddress, _adapterParams);
+
+        uint64 nonce = lzEndpoint.getOutboundNonce(_dstChainId, address(this));
+        emit SendToChain(sender, _dstChainId, _toAddress, _amount, nonce);
     }
 
     function _nonblockingLzReceive(
@@ -137,36 +135,6 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable {
         handler.executeProposal(resourceID, data);
 
         emit ReceiveFromChain(_srcChainId, _srcAddress, toAddress, amount, _nonce);
-    }
-
-    function _send(
-        address _from,
-        uint16 _dstChainId,
-        bytes memory _toAddress,
-        uint256 _amount,
-        address payable _refundAddress,
-        address _zroPaymentAddress,
-        bytes memory _adapterParams
-    ) internal virtual {
-        address sender = _msgSender();
-
-        // First get resource handler ID
-        bytes32 resourceID = abi.decode(_adapterParams, (bytes32));
-
-        // And verify
-        address handlerAddress = _resourceIDToHandlerAddress[resourceID];
-        require(handlerAddress != address(0), "resourceID not mapped to handler");
-
-        // Get handler and execute
-        IDepositExecute depositHandler = IDepositExecute(handlerAddress);
-        bytes memory handlerResponse = depositHandler.deposit(resourceID, sender, abi.encode(_amount));
-
-        // Pack data for send via LayerZero: {dstAddress,resourceID,amount}
-        bytes memory payload = abi.encode(_toAddress, resourceID, _amount);
-        _lzSend(_dstChainId, payload, _refundAddress, _zroPaymentAddress, _adapterParams);
-
-        uint64 nonce = lzEndpoint.getOutboundNonce(_dstChainId, address(this));
-        emit SendToChain(_from, _dstChainId, _toAddress, _amount, nonce);
     }
 
     /**
