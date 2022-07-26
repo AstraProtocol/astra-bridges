@@ -50,6 +50,5 @@ const setupArgs = async (args, hre) => {
 
 module.exports = {
   getDeploymentAddresses,
-  waitForTx,
   setupArgs,
 };
