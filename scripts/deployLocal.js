@@ -124,13 +124,16 @@ async function main() {
   );
   // And give the dst handler a role for minting new dst token
   let MINTER_ROLE = await dstToken.MINTER_ROLE();
-  `Adding ${dstHandlerAddr} as a minter on contract ${dstTokenAddr}`;
-  let tx = await dstToken.grantRole(MINTER_ROLE, dstHandlerAddr, {
+  await dstToken.grantRole(MINTER_ROLE, dstHandlerAddr, {
     gasPrice: 20000000000,
     gasLimit: 20000000000,
   });
 
-  await tx.wait();
+  console.log(
+    `✓ Done adding ${dstHandlerAddr} as a minter on contract ${dstTokenAddr}`
+  );
+
+  // await tx.wait();
 
   console.log('✓ Done! All are set.');
 }
