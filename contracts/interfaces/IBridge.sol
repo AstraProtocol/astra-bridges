@@ -7,26 +7,24 @@ pragma solidity >=0.8.11;
  */
 interface IBridge {
     /**
-     * @dev Emitted when `_amount` tokens are moved from the `_sender` to (`_dstChainId`, `_toAddress`)
+     * @dev Emitted when `_payload` are moved from the `_sender` to `_dstChainId`
      * `_nonce` is the outbound nonce
      */
     event SendToChain(
-        address indexed _sender,
+        address indexed _sender,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
         uint16 indexed _dstChainId,
-        bytes indexed _toAddress,
-        uint256 _amount,
+        bytes indexed _payload,
         uint64 _nonce
     );
 
     /**
-     * @dev Emitted when `_amount` tokens are received from `_srcChainId` into the `_toAddress` on the local chain.
+     * @dev Emitted when `_payload` data are received from `_srcChainId`, `_srcAddress` on the current chain.
      * `_nonce` is the inbound nonce.
      */
     event ReceiveFromChain(
         uint16 indexed _srcChainId,
         bytes indexed _srcAddress,
-        address indexed _toAddress,
-        uint256 _amount,
+        bytes indexed _payload,
         uint64 _nonce
     );
 
@@ -34,5 +32,5 @@ interface IBridge {
         @notice Expose chainID that is currently set for the Bridge contract
         @return uint16 The {_chainID} that is currently set for the Bridge contract.
      */
-    function chainID() external returns (uint16);
+    function chainID() external view returns (uint16);
 }

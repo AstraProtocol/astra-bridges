@@ -33,8 +33,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
         address depositer,
         bytes calldata data
     ) external override onlyBridge returns (bytes memory) {
-        uint256 amount;
-        (amount) = abi.decode(data, (uint256));
+        uint256 amount = abi.decode(data[32:64], (uint256));
 
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
         require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
@@ -49,27 +48,18 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
     /**
         @notice Proposal execution should be initiated when a proposal is finalized in the Bridge contract.
         by a relayer on the deposit's destination chain.
-        @param data Consists of {resourceID}, {amount}, {lenDestinationRecipientAddress},
+        @param data Consists of {resourceID}, {amount}, {toAddress},
         and {destinationRecipientAddress} all padded to 32 bytes.
         @notice Data passed into the function should be constructed as follows:
-        amount                                 uint256     bytes  0 - 32
-        destinationRecipientAddress length     uint256     bytes  32 - 64
-        destinationRecipientAddress            bytes       bytes  64 - END
+        rID                                    bytes32     bytes  0 - 32
+        amount                                 uint256     bytes  32 - 64
+        toAddress                              bytes       bytes  64 - END
      */
     function executeProposal(bytes32 resourceID, bytes calldata data) external override onlyBridge {
-        uint256 amount;
-        uint256 lenDestinationRecipientAddress;
-        bytes memory destinationRecipientAddress;
-
-        (amount, lenDestinationRecipientAddress) = abi.decode(data, (uint256, uint256));
-        destinationRecipientAddress = bytes(data[64:64 + lenDestinationRecipientAddress]);
-
-        bytes20 recipientAddress;
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
-
-        assembly {
-            recipientAddress := mload(add(destinationRecipientAddress, 0x20))
-        }
+        uint256 amount;
+        bytes20 recipientAddress;
+        (amount, recipientAddress) = abi.decode(data[32:], (uint256, bytes20));
 
         require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
 
