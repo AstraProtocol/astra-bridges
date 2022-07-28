@@ -4,14 +4,6 @@ require('@nomicfoundation/hardhat-toolbox');
 // Register tasks
 require('./tasks');
 
-task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
-  const accounts = await hre.ethers.getSigners();
-
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
-
 function getMnemonic(networkName) {
   if (networkName) {
     const mnemonic = process.env['MNEMONIC_' + networkName.toUpperCase()];
@@ -36,8 +28,10 @@ function getAccounts(chainKey) {
 module.exports = {
   solidity: '0.8.11',
 
-  defaultNetwork: 'localastra',
   networks: {
+    hardhat: {
+      blockGasLimit: 100000000000,
+    },
     localastra: {
       url: 'http://localhost:8545',
       chainId: 11110,

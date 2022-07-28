@@ -45,10 +45,21 @@ const setupArgs = async (args, hre) => {
   args.gasPrice = ethers.utils.hexlify(Number(args.gasPrice));
 
   args.signers = await hre.ethers.getSigners();
-  args.owner = signers[0];
+  args.owner = args.signers[0];
+};
+
+/**
+ * Parse amount of token using decimals
+ * @param {number} amount Amount of token
+ * @param {number} decimals Token decimal
+ * @returns parsed amount
+ */
+const expandDecimals = (amount, decimals = 18) => {
+  return ethers.utils.parseUnits(String(amount), decimals);
 };
 
 module.exports = {
   getDeploymentAddresses,
   setupArgs,
+  expandDecimals,
 };

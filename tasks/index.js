@@ -1,3 +1,13 @@
+const { task, types } = require('hardhat/config');
+
+task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
+  const accounts = await hre.ethers.getSigners();
+
+  for (const account of accounts) {
+    console.log(account.address);
+  }
+});
+
 task(
   'registerResource',
   'Register a resource ID with a contract address for a handler',
@@ -27,3 +37,23 @@ task(
     'targetBridgeAddress',
     'Target chain contract address to be trusted'
   );
+
+task('approveERC20', 'Approve tokens for transfer', require('./approve-erc20'))
+  .addParam(
+    'recipient',
+    'Destination recipient address',
+    process.env.SRC_HANDLER
+  )
+  .addParam('amount', 'Amount to transfer', 1, types.float)
+  .addParam('tokenAddress', 'Token deployed address', process.env.SRC_TOKEN);
+
+task(
+  'transferERC20',
+  'Transfer tokens cross-chain using bridge',
+  require('./transfer-erc20')
+)
+  .addParam('resourceId', 'resource id', process.env.RESOURCE_ID)
+  .addParam('amount', 'Amount to send', 1, types.float)
+  .addParam('targetChainId', 'Destination network chain id', 31337, types.int)
+  .addParam('recipient', 'Destination recipient address')
+  .addParam('bridge', 'Bridge using to send', process.env.SRC_BRIDGE);

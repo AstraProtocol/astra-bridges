@@ -6,6 +6,9 @@
 // global scope, and execute the script.
 const { isValidAddress } = require('../src/utils/ethers');
 const hre = require('hardhat');
+const fs = require('fs/promises');
+const path = require('path');
+const chalk = require('chalk');
 
 async function checkAndDeploy(
   address,
@@ -15,6 +18,7 @@ async function checkAndDeploy(
 ) {
   const owner = (await hre.ethers.getSigners())[0];
   let contractInstance;
+  console.log(`=> Start deploying ${deployedAs}...`);
   if (!isValidAddress(address)) {
     // Deploy the contract first
     const Contract = await hre.ethers.getContractFactory(contractName);
@@ -23,11 +27,17 @@ async function checkAndDeploy(
 
     // Then assign the address
     console.log(
-      `✓ ${contractName} deployed for ${deployedAs} at ${contractInstance.address}`
+      chalk.green('✓'),
+      ` ${contractName} deployed for ${deployedAs} at ${chalk.blue(
+        contractInstance.address
+      )}`
     );
     address = contractInstance.address;
   } else {
-    console.log(`✓ Using ${deployedAs} instance at ${address}`);
+    console.log(
+      chalk.green('✓'),
+      `Using ${deployedAs} instance at ${chalk.yellow(address)}`
+    );
     contractInstance = await hre.ethers.getContractAt(
       contractName,
       address,
@@ -41,7 +51,10 @@ async function checkAndDeploy(
 }
 
 async function main() {
-  const chainId = hre.network.config.chainId;
+  const envFilepath = path.resolve(__dirname, '..', '.env');
+
+  const srcChainId = hre.network.config.chainId || 31337;
+  const dstChainId = srcChainId + 1;
   // First, required a test ERC20 token or mocked
   const { contractInstance: srcToken, address: srcTokenAddr } =
     await checkAndDeploy(process.env.SRC_TOKEN, 'ERC20Mock', 'ERC20Mock', [
@@ -56,28 +69,54 @@ async function main() {
       ['WrappedMock', 'WMOCK']
     );
   // And mint some mock token into current account 100 token
-  // srcTokenAddr.mint(owner.address, hre.ethers.BigNumber.from("10").pow(20));
+  const owner = (await hre.ethers.getSigners())[0];
+  await srcToken.mint(owner.address, hre.ethers.BigNumber.from('10').pow(20));
 
-  // After that, deploy the mock lzEndpoint
-  const { address: lzEndpointAddr, contractInstance: lzEndpoint } =
+  // After that, deploy the mock lzEndpoint for src, dst
+  const { address: srcLZEndpointAddr, contractInstance: srcLZEndpoint } =
     await checkAndDeploy(
-      process.env.LZ_ENDPOINT,
+      process.env.SRC_LZ_ENDPOINT,
       'LZEndpointMock',
-      'LZEndpointMock',
-      [chainId]
+      'Src LZEndpointMock',
+      [srcChainId]
     );
+  const { address: dstLZEndpointAddr, contractInstance: dstLZEndpoint } =
+    await checkAndDeploy(
+      process.env.DST_LZ_ENDPOINT,
+      'LZEndpointMock',
+      'Dst LZEndpointMock',
+      [dstChainId]
+    );
+
+  const mockEstimatedNativeFee = hre.ethers.BigNumber.from(10);
+  const mockEstimatedZroFee = hre.ethers.BigNumber.from(2);
+  await srcLZEndpoint.setEstimatedFees(
+    mockEstimatedNativeFee,
+    mockEstimatedZroFee
+  );
+  await dstLZEndpoint.setEstimatedFees(
+    mockEstimatedNativeFee,
+    mockEstimatedZroFee
+  );
 
   // Then, deploy the bridge contract on src and dst (in the same blockchain)
   const { address: srcBridgeAddr, contractInstance: srcBridge } =
     await checkAndDeploy(process.env.SRC_BRIDGE, 'Bridge', 'SrcBridge', [
-      chainId,
-      lzEndpointAddr,
+      srcChainId,
+      srcLZEndpointAddr,
     ]);
   const { address: dstBridgeAddr, contractInstance: dstBridge } =
     await checkAndDeploy(process.env.DST_BRIDGE, 'Bridge', 'DstBridge', [
-      chainId,
-      lzEndpointAddr,
+      dstChainId,
+      dstLZEndpointAddr,
     ]);
+
+  // And config lzEndpoint for trusting each other
+  await srcLZEndpoint.setDestLzEndpoint(dstBridgeAddr, dstLZEndpoint.address);
+  await dstLZEndpoint.setDestLzEndpoint(srcBridgeAddr, srcLZEndpoint.address);
+  // And set trusted remote for each other
+  await srcBridge.setTrustedRemote(dstChainId, dstBridgeAddr);
+  await dstBridge.setTrustedRemote(srcChainId, srcBridgeAddr);
 
   // Deploy handlers
   const { address: srcHandlerAddr, contractInstance: srcHandler } =
@@ -104,14 +143,16 @@ async function main() {
     gasLimit: 20000000000,
   });
   console.log(
-    `✓ Done register src resource: ${srcHandlerAddr} - ${resourceID} - ${srcTokenAddr}`
+    chalk.green('✓'),
+    `Done register src resource: ${srcHandlerAddr} - ${resourceID} - ${srcTokenAddr}`
   );
   await dstBridge.adminSetResource(dstHandlerAddr, resourceID, dstTokenAddr, {
     gasPrice: 20000000000,
     gasLimit: 20000000000,
   });
   console.log(
-    `✓ Done register dst resource: ${dstHandlerAddr} - ${resourceID} - ${dstTokenAddr}`
+    chalk.green('✓'),
+    `Done register dst resource: ${dstHandlerAddr} - ${resourceID} - ${dstTokenAddr}`
   );
 
   // Set burnable for destination bridge
@@ -120,7 +161,8 @@ async function main() {
     gasLimit: 20000000000,
   });
   console.log(
-    `✓ Done set burnable handler: ${dstHandlerAddr} - ${dstTokenAddr}`
+    chalk.green('✓'),
+    `Done set burnable handler: ${dstHandlerAddr} - ${dstTokenAddr}`
   );
   // And give the dst handler a role for minting new dst token
   let MINTER_ROLE = await dstToken.MINTER_ROLE();
@@ -130,12 +172,28 @@ async function main() {
   });
 
   console.log(
-    `✓ Done adding ${dstHandlerAddr} as a minter on contract ${dstTokenAddr}`
+    chalk.green('✓'),
+    `Done adding ${dstHandlerAddr} as a minter on contract ${dstTokenAddr}`
   );
 
   // await tx.wait();
 
-  console.log('✓ Done! All are set.');
+  console.log(chalk.green('✓'), 'Done! All are set.');
+
+  // Write to env file
+  await fs.writeFile(
+    envFilepath,
+    `SRC_TOKEN=${srcTokenAddr}
+DST_TOKEN=${dstTokenAddr}
+SRC_LZ_ENDPOINT=${srcLZEndpointAddr}
+DST_LZ_ENDPOINT=${dstLZEndpointAddr}
+SRC_BRIDGE=${srcBridgeAddr}
+DST_BRIDGE=${dstBridgeAddr}
+RESOURCE_ID=0x000000000000000000000000000000c76ebe4a02bbc34786d860b355f5a5ce00
+SRC_HANDLER=${srcHandlerAddr}
+DST_HANDLER=${dstHandlerAddr}
+`
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere
