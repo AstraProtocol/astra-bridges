@@ -1,3 +1,4 @@
+const chalk = require('chalk');
 const { setupArgs } = require('./utils');
 
 /**
@@ -6,16 +7,28 @@ const { setupArgs } = require('./utils');
  * @param {import('hardhat')} hre Hardhat Runtime Env
  */
 module.exports = async function (taskArgs, hre) {
-  setupArgs(taskArgs, hre);
-  const srcContractName = 'Bridge';
+  await setupArgs(taskArgs, hre);
 
-  const bridgeInstance = await hre.ethers.getContractAt(srcContractName);
+  const bridgeInstance = await hre.ethers.getContractAt(
+    'Bridge',
+    taskArgs.bridge,
+    taskArgs.owner
+  );
   const tx = await bridgeInstance.adminSetResource(
-    args.handler,
-    args.resourceId,
-    args.targetContract,
-    { gasPrice: args.gasPrice, gasLimit: args.gasLimit }
+    taskArgs.handler,
+    taskArgs.resourceId,
+    taskArgs.targetContract,
+    { gasPrice: taskArgs.gasPrice, gasLimit: taskArgs.gasLimit }
   );
 
   await tx.wait();
+
+  console.log(
+    chalk.green('✓'),
+    `Done register resource:
+Bridge:   ${taskArgs.bridge}
+Handler:  ${taskArgs.handler}
+Resource: ${taskArgs.resourceId}
+Token:    ${taskArgs.targetContract}`
+  );
 };

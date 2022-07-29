@@ -1,3 +1,4 @@
+const chalk = require('chalk');
 const { isValidAddress } = require('../src/utils/ethers');
 const { setupArgs } = require('./utils');
 
@@ -21,26 +22,20 @@ module.exports = async function (taskArgs, hre) {
   const { ethers } = hre;
 
   const data =
-    process.env.RESOURCE_ID +                                       // Resource ID           (32 bytes)
+    process.env.RESOURCE_ID + // Resource ID           (32 bytes)
     ethers.utils
       .hexZeroPad(
         ethers.utils.parseEther(String(taskArgs.amount)).toHexString(),
         32
       )
-      .substring(2) +                                               // Deposit Amount        (32 bytes)
-      taskArgs.recipient.substring(2) + "000000000000000000000000"; // RecipientAddress      (32 bytes)
+      .substring(2) + // Deposit Amount        (32 bytes)
+    taskArgs.recipient.substring(2) +
+    '000000000000000000000000'; // RecipientAddress      (32 bytes)
 
   const adapterParams = ethers.utils.solidityPack(
     ['uint16', 'uint256'],
     [1, 350000]
   );
-  console.log({
-    owner: taskArgs.owner.address,
-    targetChainId: taskArgs.targetChainId,
-    resourceId: taskArgs.resourceId,
-    data,
-    adapterParams,
-  });
 
   // Call send to chain
   const tx = await srcBridge.sendToChain(
@@ -49,12 +44,21 @@ module.exports = async function (taskArgs, hre) {
     taskArgs.resourceId,
     data,
     adapterParams,
-    { value: 20_000_000_000, gasPrice: 20_000_000_000, gasLimit: 20_000_000_000 }
+    {
+      value: 20_000_000_000,
+      gasPrice: 20_000_000_000,
+      gasLimit: 20_000_000_000,
+    }
   );
 
   await tx.wait();
 
   console.log(
-    `✅ Message Sent [${hre.network.name}] sendToChain() @ LZ chainId[${taskArgs.targetChainId}]`
+    chalk.green('✓'),
+    `Done transfer:
+Recipient:    ${taskArgs.recipient}
+Resource ID:  ${taskArgs.resourceId}
+Target Chain: ${taskArgs.targetChainId}
+Amount:       ${taskArgs.amount}`
   );
 };

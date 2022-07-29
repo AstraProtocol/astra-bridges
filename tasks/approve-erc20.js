@@ -1,3 +1,4 @@
+const chalk = require('chalk');
 const { isValidAddress } = require('../src/utils/ethers');
 const { setupArgs, expandDecimals } = require('./utils');
 
@@ -24,4 +25,12 @@ module.exports = async function (taskArgs, hre) {
   );
 
   await tx.wait();
+
+  console.log(
+    chalk.green('✓'),
+    `Done approval:
+Recipient:   ${taskArgs.recipient}
+Token:       ${taskArgs.tokenAddress}
+Amount:      ${taskArgs.amount}`
+  );
 };

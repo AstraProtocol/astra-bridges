@@ -16,7 +16,7 @@ task(
   .addParam('bridge', 'Bridge contract address')
   .addParam('handler', 'Handler address')
   .addParam('targetContract', 'Contract address to be registered')
-  .addParam('resourceId', 'Resource ID to be registered');
+  .addParam('resourceId', 'Resource Id to be registered');
 
 task(
   'setBurnable',
@@ -25,13 +25,14 @@ task(
 )
   .addParam('bridge', 'Bridge contract address')
   .addParam('handler', 'Handler address')
-  .addParam('tokenContract', 'Token contract to be registered');
+  .addParam('tokenContract', 'Token contract to be set');
 
 task(
   'setTrustedRemote',
   'Set a bridge contract trusted remote',
   require('./set-trusted-remote')
 )
+  .addParam('bridge', 'Address of deployed bridge')
   .addParam('targetChainId', 'Trusted chain id')
   .addParam(
     'targetBridgeAddress',

@@ -5,30 +5,39 @@
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
 const hre = require('hardhat');
+const chalk = require('chalk');
 
 async function main() {
+  if (!hre.network.config.chainId) {
+    throw new Error('Network chain id must be specified');
+  }
+  const lzEndpointAddr = process.env.LZ_ENDPOINT;
+
   // First, deploy the bridge contract on dst
   const Bridge = await hre.ethers.getContractFactory('Bridge');
-  const bridge = await Bridge.deploy(
+  const bridgeInstance = await Bridge.deploy(
     hre.network.config.chainId, // Network
-    lzEndpoint // lzEndpoint address
+    lzEndpointAddr // lzEndpoint address
   );
 
-  await bridge.deployed();
-  console.log(`✓ Bridge contract deployed at ${bridge.address}`);
+  await bridgeInstance.deployed();
+  console.log(
+    chalk.green('✓'),
+    `Bridge contract deployed at ${chalk.blue(bridgeInstance.address)}`
+  );
 
   // Then deploy a ERC20Handler on dst
   const ERC20Handler = await hre.ethers.getContractFactory('ERC20Handler');
   const erc20Handler = await ERC20Handler.deploy(
-    bridge.address // Bridge address
+    bridgeInstance.address // Bridge address
   );
   await erc20Handler.deployed();
   console.log(`✓ ERC20Handler contract deployed at ${erc20Handler.address}`);
 
   // Then configuration the resource
   console.log(`! Please config the resource with following commands:
-\$ npx hardhat registerResource --bridge <address> --handler <address> --targetContract <address> --resourceId <address>
-\$ npx hardhat setBurnable --bridge <address> --handler <address> --tokenContract <address>
+$ npx hardhat registerResource --bridge <address> --handler <address> --targetContract <address> --resourceId <address>
+$ npx hardhat setBurnable --bridge <address> --handler <address> --tokenContract <address>
 `);
 }
 
