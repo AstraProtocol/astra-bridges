@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { expandDecimals } = require('../tasks/utils');
+const { expandDecimals } = require('../../tasks/utils');
 
 describe('Bridge', function () {
   beforeEach(async function () {
@@ -106,7 +106,7 @@ describe('Bridge', function () {
       process.env.RESOURCE_ID + // Resource ID           (32 bytes)
       ethers.utils.hexZeroPad(sendAmount.toHexString(), 32).substring(2) + // Deposit Amount        (32 bytes)
       this.walletAddress.substring(2) +
-      '000000000000000000000000'; // RecipientAddress      (32 bytes)
+      '000000000000000000000000'; // RecipientAddress + 0 pads      (32 bytes)
 
     const adapterParams = ethers.utils.solidityPack(
       ['uint16', 'uint256'],
