@@ -32,18 +32,18 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
     }
 
     function _onlyAdmin() private view {
-        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "sender doesn't have admin role");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "sender doesn't have admin role");
     }
 
     /**
-        @notice Initializes Bridge, creates and grants {_msgSender()} the admin role
+        @notice Initializes Bridge, creates and grants {msg.sender} the admin role
         @param chainID_ ID of chain the Bridge contract exists on.
         @param lzEndpoint_ LayerZero endpoint
      */
     constructor(uint16 chainID_, address lzEndpoint_) NonblockingLzApp(lzEndpoint_) {
         _chainID = chainID_;
 
-        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function chainID() external view virtual override returns (uint16) {
@@ -73,8 +73,6 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
         bytes calldata _data, // {resourceID,amount,toAddress}
         bytes calldata _adapterParams
     ) external payable virtual whenNotPaused {
-        address sender = _msgSender();
-
         // First get resource handler ID and verify
         address handlerAddress = _resourceIDToHandlerAddress[_resourceID];
         require(handlerAddress != address(0), "this _resourceID not mapped to any handler");
@@ -83,10 +81,10 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
         IDepositExecute depositHandler = IDepositExecute(handlerAddress);
         bytes memory handlerResponse = depositHandler.deposit(_resourceID, _from, _data);
 
-        _lzSend(_dstChainId, _data, payable(sender), address(0x0), _adapterParams);
+        _lzSend(_dstChainId, _data, payable(msg.sender), address(0x0), _adapterParams);
 
         uint64 nonce = lzEndpoint.getOutboundNonce(_dstChainId, address(this));
-        emit SendToChain(sender, _dstChainId, _data, nonce);
+        emit SendToChain(msg.sender, _dstChainId, _data, nonce);
     }
 
     function _nonblockingLzReceive(
@@ -95,13 +93,10 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
         uint64 _nonce,
         bytes memory _payload
     ) internal virtual override {
-        // decode and load the toAddress
-        bytes32 resourceID;
-        uint256 amount;
+        // decode and load the resouce ID, and received data
+        bytes32 resourceID = abi.decode(_payload, (bytes32));
 
-        (resourceID, amount) = abi.decode(_payload, (bytes32, uint256));
-
-        // Get handler and execute
+        // Get handler by resource ID and execute with data
         address handlerAddress = _resourceIDToHandlerAddress[resourceID];
         IDepositExecute handler = IDepositExecute(handlerAddress);
         handler.executeProposal(resourceID, _payload);
@@ -110,15 +105,14 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
     }
 
     /**
-        @notice Removes admin role from {_msgSender()} and grants it to {newAdmin}.
+        @notice Removes admin role from {msg.sender} and grants it to {newAdmin}.
         @notice Only callable by an address that currently has the admin role.
         @param newAdmin Address that admin role will be granted to.
      */
     function renounceAdmin(address newAdmin) external onlyAdmin {
-        address sender = _msgSender();
-        require(sender != newAdmin, "Cannot renounce oneself");
+        require(msg.sender != newAdmin, "Cannot renounce oneself");
         grantRole(DEFAULT_ADMIN_ROLE, newAdmin);
-        renounceRole(DEFAULT_ADMIN_ROLE, sender);
+        renounceRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     /**
@@ -126,7 +120,7 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
         @notice Only callable by an address that currently has the admin role.
      */
     function adminPauseTransfers() external onlyAdmin {
-        _pause(_msgSender());
+        _pause(msg.sender);
     }
 
     /**
@@ -134,7 +128,7 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
         @notice Only callable by an address that currently has the admin role.
      */
     function adminUnpauseTransfers() external onlyAdmin {
-        _unpause(_msgSender());
+        _unpause(msg.sender);
     }
 
     /**
