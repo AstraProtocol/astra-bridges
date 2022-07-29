@@ -19,7 +19,7 @@ cp .env.example .env
 
 Then modify the `.env` file with your appropriate variables.
 
-Run test with following CLI:
+Run tests with following CLI:
 
 ```shell
 npx hardhat test
@@ -27,8 +27,50 @@ npx hardhat test
 
 ## Deploy smart contracts
 
-TODO:
+### Localhost Hardhat
 
-## Run Scripts
+To deploy a test with Hardhat localhost, first run the node:
+
+```shell
+npx hardhat node
+```
+
+Then, in another shell, run a script for deploying:
+
+```shell
+npx hardhat run --network localhost scripts/deployLocal.js
+```
+
+Then we can continue with other tasks: `approveERC20`, `transferERC20`
+
+### Testnets
+
+TODO: Deploy scripts on testnet
+
+## Run Tasks
+
+### Approve Transfer
+
+```shell
+npx hardhat approveERC20 --network [network] --amount [amount] --recipient [approving-address] --tokenAddress [approving-token]
+```
+
+For example, following script will allow SRC_HANDLER to send 10 amount of SRC_TOKEN:
+
+```shell
+npx hardhat approveERC20 --amount 10 --network localhost
+```
+
+### Transfer via Bridge `sendToChain`
+
+```shell
+npx hardhat transferERC20 --network [network] --amount [amount] --target-chain-id [target] --recipient [receiving-address] --resource-id [resource-id] --bridge [bridge-address]
+```
+
+For example:
+
+```shell
+npx hardhat transferERC20 --amount 1 --recipient 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --network localhost --target-chain-id 31338
+```
 
 ## Folder Structures
