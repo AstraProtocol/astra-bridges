@@ -52,7 +52,7 @@ contract ERC1155Handler is IDepositExecute, HandlerHelpers, ERC1155Safe, ERC1155
         @param data Consists of ABI-encoded {tokenIDs}, {amounts}, {recipient},
         and {transferData} of types uint[], uint[], bytes, bytes.
      */
-    function executeProposal(bytes32 resourceID, bytes calldata data) external override onlyBridge {
+    function execute(bytes32 resourceID, bytes calldata data) external override onlyBridge {
         uint256[] memory tokenIDs;
         uint256[] memory amounts;
         bytes memory recipient;

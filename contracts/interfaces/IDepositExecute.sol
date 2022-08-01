@@ -18,8 +18,8 @@ interface IDepositExecute {
     ) external returns (bytes memory);
 
     /**
-        @notice It is intended that proposals are executed by the Bridge contract.
+        @notice It is executed by the Bridge contract when received payload.
         @param data Consists of additional data needed for a specific deposit execution.
      */
-    function executeProposal(bytes32 resourceID, bytes calldata data) external;
+    function execute(bytes32 resourceID, bytes calldata data) external;
 }

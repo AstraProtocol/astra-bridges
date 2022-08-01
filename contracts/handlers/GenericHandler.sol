@@ -135,7 +135,7 @@ contract GenericHandler is IGenericHandler {
         @notice If {_contractAddressToExecuteFunctionSignature}[{contractAddress}] is set,
         {metaData} is expected to consist of needed function arguments.
      */
-    function executeProposal(bytes32 resourceID, bytes calldata data) external onlyBridge {
+    function execute(bytes32 resourceID, bytes calldata data) external onlyBridge {
         uint256 lenMetadata;
         bytes memory metaData;
 

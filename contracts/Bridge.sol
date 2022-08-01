@@ -96,7 +96,7 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
         // Get handler by resource ID and execute with data
         address handlerAddress = _resourceIDToHandlerAddress[resourceID];
         IDepositExecute handler = IDepositExecute(handlerAddress);
-        handler.executeProposal(resourceID, _payload);
+        handler.execute(resourceID, _payload);
 
         emit ReceiveFromChain(_srcChainId, _srcAddress, _payload, _nonce);
     }

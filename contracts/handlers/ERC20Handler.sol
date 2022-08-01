@@ -55,7 +55,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
         amount                                 uint256     bytes  32 - 64
         toAddress                              bytes       bytes  64 - END
      */
-    function executeProposal(bytes32 resourceID, bytes calldata data) external override onlyBridge {
+    function execute(bytes32 resourceID, bytes calldata data) external override onlyBridge {
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
         (uint256 amount, bytes20 recipientAddress) = abi.decode(data[32:], (uint256, bytes20));
 
