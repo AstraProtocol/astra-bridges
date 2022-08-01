@@ -24,13 +24,14 @@ abstract contract NonblockingLzApp is LzApp {
         bytes memory _payload
     ) internal virtual override {
         // try-catch all errors/exceptions
-        try this.nonblockingLzReceive(_srcChainId, _srcAddress, _nonce, _payload) {
-            // do nothing
-        } catch {
-            // error / exception
-            failedMessages[_srcChainId][_srcAddress][_nonce] = keccak256(_payload);
-            emit MessageFailed(_srcChainId, _srcAddress, _nonce, _payload);
-        }
+        this.nonblockingLzReceive(_srcChainId, _srcAddress, _nonce, _payload);
+        // try this.nonblockingLzReceive(_srcChainId, _srcAddress, _nonce, _payload) {
+        //     // do nothing
+        // } catch {
+        //     // error / exception
+        //     failedMessages[_srcChainId][_srcAddress][_nonce] = keccak256(_payload);
+        //     emit MessageFailed(_srcChainId, _srcAddress, _nonce, _payload);
+        // }
     }
 
     function nonblockingLzReceive(

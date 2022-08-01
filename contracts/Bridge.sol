@@ -20,9 +20,6 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
 
     uint16 public _chainID;
 
-    // destinationDomainID => number of deposits
-    mapping(uint16 => uint64) public _depositCounts;
-
     // resourceID => handler address
     mapping(bytes32 => address) public _resourceIDToHandlerAddress;
 
@@ -185,17 +182,6 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
     function adminSetBurnable(address handlerAddress, address tokenAddress) external onlyAdmin {
         IERCHandler handler = IERCHandler(handlerAddress);
         handler.setBurnable(tokenAddress);
-    }
-
-    /**
-        @notice Sets the nonce for the specific domainID.
-        @notice Only callable by an address that currently has the admin role.
-        @param domainID Domain ID for increasing nonce.
-        @param nonce The nonce value to be set.
-     */
-    function adminSetDepositNonce(uint16 domainID, uint64 nonce) external onlyAdmin {
-        require(nonce > _depositCounts[domainID], "Does not allow decrements of the nonce");
-        _depositCounts[domainID] = nonce;
     }
 
     /**
