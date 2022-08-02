@@ -14,9 +14,8 @@ module.exports = async function (taskArgs, hre) {
   }
 
   const srcToken = await hre.ethers.getContractAt(
-    'ERC20Mock',
-    taskArgs.tokenAddress,
-    taskArgs.owner
+    'SrcERC20',
+    taskArgs.tokenAddress
   );
   const tx = await srcToken.approve(
     taskArgs.recipient,
