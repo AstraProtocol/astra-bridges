@@ -9,6 +9,15 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
 });
 
 task(
+  'deployAsToken',
+  'Deploy a wrapped ERC20 token in destination chain with minter/pauser preset',
+  require('./deploy-as-token')
+)
+  .addParam('name', 'Token name')
+  .addParam('symbol', 'Token symbol')
+  .addParam('decimals', 'Token decimals, default: 18', 18, types.int);
+
+task(
   'registerResource',
   'Register a resource ID with a contract address for a handler',
   require('./register-resource')
