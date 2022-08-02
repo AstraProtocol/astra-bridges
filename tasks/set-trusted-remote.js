@@ -24,7 +24,7 @@ module.exports = async function (taskArgs, hre) {
 
   console.log(
     chalk.green('✓'),
-    `Done register resource:
+    `Done set trusted remote:
 TxHash:         ${tx.hash}
 Source Bridge:  ${taskArgs.bridge}
 Target Chain:   ${taskArgs.targetChainId}

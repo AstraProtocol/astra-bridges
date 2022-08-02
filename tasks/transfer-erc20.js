@@ -37,6 +37,15 @@ module.exports = async function (taskArgs, hre) {
     [1, 350000]
   );
 
+  // Estimate fee
+  let sendFeeResp = await srcBridge.estimateSendFee(
+    taskArgs.targetChainId,
+    data,
+    true,
+    adapterParams
+  );
+  const sendFee = sendFeeResp.nativeFee.add(sendFeeResp.zroFee);
+
   // Call send to chain
   const tx = await srcBridge.sendToChain(
     taskArgs.owner.address,
@@ -45,7 +54,7 @@ module.exports = async function (taskArgs, hre) {
     data,
     adapterParams,
     {
-      value: taskArgs.value,
+      value: sendFee,
       gasPrice: taskArgs.gasPrice,
       gasLimit: taskArgs.gasLimit,
     }
