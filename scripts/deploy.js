@@ -1,9 +1,10 @@
 const hre = require('hardhat');
 const chalk = require('chalk');
 const endpoints = require('../constants/layerzeroEndpoints.json');
+const chainIds = require('../constants/chainIds.json');
 
 async function main() {
-  const chainId = hre.network.config.chainId || 31337; // Fallback to localhost
+  const chainId = chainIds[hre.network.name]; // Fallback to localhost
   const lzEndpointAddr = endpoints[hre.network.name];
   if (!lzEndpointAddr) {
     throw new Error('No LZ endpoint for this network');
