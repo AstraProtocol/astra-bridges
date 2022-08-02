@@ -18,6 +18,29 @@ task(
   .addParam('decimals', 'Token decimals, default: 18', 18, types.int);
 
 task(
+  'grantMinterRole',
+  'Grant minter role for destination token',
+  require('./grant-minter-role')
+)
+  .addParam('tokenAddress', 'Token address to be added')
+  .addParam('minter', 'Minter address to be granted')
+  .addParam('gasPrice', 'Gas price', 2000000000, types.int)
+  .addParam('gasLimit', 'Gas limited', 2000000000, types.int);
+
+task(
+  'withdrawFunds',
+  'Withdraw funds locked on Bridge',
+  require('./withdraw-funds')
+)
+  .addParam('bridge', 'Bridge address')
+  .addParam('handler', 'Handler which is the executor')
+  .addParam('tokenAddress', 'Token to withdraw')
+  .addParam('amount', 'Amount to withdraw', 1, types.float)
+  .addParam('recipient', 'Recipient', '')
+  .addParam('gasPrice', 'Gas price', 2000000000, types.int)
+  .addParam('gasLimit', 'Gas limited', 2000000000, types.int);
+
+task(
   'registerResource',
   'Register a resource ID with a contract address for a handler',
   require('./register-resource')
