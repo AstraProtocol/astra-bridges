@@ -25,7 +25,9 @@ task(
   .addParam('bridge', 'Bridge contract address')
   .addParam('handler', 'Handler address')
   .addParam('targetContract', 'Contract address to be registered')
-  .addParam('resourceId', 'Resource Id to be registered');
+  .addParam('resourceId', 'Resource Id to be registered')
+  .addParam('gasPrice', 'Gas price', 2000000000, types.int)
+  .addParam('gasLimit', 'Gas limited', 2000000000, types.int);
 
 task(
   'setBurnable',
@@ -34,7 +36,9 @@ task(
 )
   .addParam('bridge', 'Bridge contract address')
   .addParam('handler', 'Handler address')
-  .addParam('tokenContract', 'Token contract to be set');
+  .addParam('tokenContract', 'Token contract to be set')
+  .addParam('gasPrice', 'Gas price', 2000000000, types.int)
+  .addParam('gasLimit', 'Gas limited', 2000000000, types.int);
 
 task(
   'setTrustedRemote',
@@ -46,7 +50,9 @@ task(
   .addParam(
     'targetBridgeAddress',
     'Target chain contract address to be trusted'
-  );
+  )
+  .addParam('gasPrice', 'Gas price', 2000000000, types.int)
+  .addParam('gasLimit', 'Gas limited', 2000000000, types.int);
 
 task('approveERC20', 'Approve tokens for transfer', require('./approve-erc20'))
   .addParam(
@@ -55,7 +61,9 @@ task('approveERC20', 'Approve tokens for transfer', require('./approve-erc20'))
     process.env.SRC_HANDLER
   )
   .addParam('amount', 'Amount to transfer', 1, types.float)
-  .addParam('tokenAddress', 'Token deployed address', process.env.SRC_TOKEN);
+  .addParam('tokenAddress', 'Token deployed address', process.env.SRC_TOKEN)
+  .addParam('gasPrice', 'Gas price', 2000000000, types.int)
+  .addParam('gasLimit', 'Gas limited', 2000000000, types.int);
 
 task(
   'transferERC20',
@@ -66,4 +74,7 @@ task(
   .addParam('amount', 'Amount to send', 1, types.float)
   .addParam('targetChainId', 'Destination network chain id', 31337, types.int)
   .addParam('recipient', 'Destination recipient address')
-  .addParam('bridge', 'Bridge using to send', process.env.SRC_BRIDGE);
+  .addParam('bridge', 'Bridge using to send', process.env.SRC_BRIDGE)
+  .addParam('value', 'LZ sending fee', 20000000000, types.int)
+  .addParam('gasPrice', 'Gas price', 2000000000, types.int)
+  .addParam('gasLimit', 'Gas limited', 2000000000, types.int);

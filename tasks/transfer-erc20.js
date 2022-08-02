@@ -45,9 +45,9 @@ module.exports = async function (taskArgs, hre) {
     data,
     adapterParams,
     {
-      value: 20_000_000_000,
-      gasPrice: 20_000_000_000,
-      gasLimit: 20_000_000_000,
+      value: taskArgs.value,
+      gasPrice: taskArgs.gasPrice,
+      gasLimit: taskArgs.gasLimit,
     }
   );
 
@@ -56,6 +56,7 @@ module.exports = async function (taskArgs, hre) {
   console.log(
     chalk.green('✓'),
     `Done transfer:
+TxHash:       ${tx.hash}
 Recipient:    ${taskArgs.recipient}
 Resource ID:  ${taskArgs.resourceId}
 Target Chain: ${taskArgs.targetChainId}

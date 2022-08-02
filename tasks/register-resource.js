@@ -26,6 +26,7 @@ module.exports = async function (taskArgs, hre) {
   console.log(
     chalk.green('✓'),
     `Done register resource:
+TxHash:   ${tx.hash}
 Bridge:   ${taskArgs.bridge}
 Handler:  ${taskArgs.handler}
 Resource: ${taskArgs.resourceId}

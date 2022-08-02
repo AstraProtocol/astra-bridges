@@ -16,7 +16,8 @@ module.exports = async function (taskArgs, hre) {
   );
   const tx = await bridgeInstance.setTrustedRemote(
     taskArgs.targetChainId,
-    taskArgs.targetBridgeAddress
+    taskArgs.targetBridgeAddress,
+    { gasPrice: taskArgs.gasPrice, gasLimit: taskArgs.gasLimit }
   );
 
   await tx.wait();
@@ -24,6 +25,7 @@ module.exports = async function (taskArgs, hre) {
   console.log(
     chalk.green('✓'),
     `Done register resource:
+TxHash:         ${tx.hash}
 Source Bridge:  ${taskArgs.bridge}
 Target Chain:   ${taskArgs.targetChainId}
 Target Bridge:  ${taskArgs.targetBridgeAddress}`

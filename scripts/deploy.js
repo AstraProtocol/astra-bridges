@@ -38,10 +38,10 @@ async function main() {
     chalk.red('!'),
     `Please config the resource with following commands:
 ${chalk.gray(
-    '$ npx hardhat registerResource --bridge <address> --handler <address> --targetContract <address> --resourceId <address>'
+    `$ npx hardhat registerResource --bridge ${bridgeInstance.address} --handler ${erc20Handler.address} --target-contract <address> --resource-id <resourceID>`
   )}
 ${chalk.gray(
-    '$ npx hardhat setBurnable --bridge <address> --handler <address> --tokenContract <address>'
+    `$ npx hardhat setBurnable --bridge ${bridgeInstance.address} --handler ${erc20Handler.address} --token-contract <address>`
   )}
 `
   );

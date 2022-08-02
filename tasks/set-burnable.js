@@ -25,6 +25,7 @@ module.exports = async function (taskArgs, hre) {
   console.log(
     chalk.green('✓'),
     `Done set burnable for token:
+TxHash:   ${tx.hash}
 Bridge:   ${taskArgs.bridge}
 Handler:  ${taskArgs.handler}
 Token:    ${taskArgs.tokenContract}`

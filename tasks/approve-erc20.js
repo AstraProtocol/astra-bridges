@@ -21,7 +21,7 @@ module.exports = async function (taskArgs, hre) {
   const tx = await srcToken.approve(
     taskArgs.recipient,
     expandDecimals(taskArgs.amount),
-    { gasPrice: 2_000_000_000, gasLimit: 2_000_000_000 }
+    { gasPrice: taskArgs.gasPrice, gasLimit: taskArgs.gasLimit }
   );
 
   await tx.wait();
@@ -29,6 +29,7 @@ module.exports = async function (taskArgs, hre) {
   console.log(
     chalk.green('✓'),
     `Done approval:
+TxHash:      ${tx.hash}
 Recipient:   ${taskArgs.recipient}
 Token:       ${taskArgs.tokenAddress}
 Amount:      ${taskArgs.amount}`
