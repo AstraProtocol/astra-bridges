@@ -45,9 +45,15 @@ Then we can continue with other tasks: `approveERC20`, `transferERC20`
 
 ### Testnets
 
-TODO: Deploy scripts on testnet
+Run deploy Bridge and ERC20Handler for an available public testnet:
+
+```shell
+npx hardhat run --network fuji scripts/deploy.js
+```
 
 ## Run Tasks
+
+There are some pre-defined tasks that can run directly for setting up Astra Bridge and interacting with smart contracts:
 
 ### Approve Transfer
 
@@ -73,4 +79,30 @@ For example:
 npx hardhat transferERC20 --amount 1 --recipient 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --network localhost --target-chain-id 31338
 ```
 
+### Setting up Bridge
+
+```shell
+npx hardhat grantMinterRole --network [network]
+```
+
+```shell
+npx hardhat registerResource --network [network]
+```
+
+```shell
+npx hardhat setTrustedRemote --network [network]
+```
+
+```shell
+npx hardhat setBurnable --network [network]
+```
+
+### Admin withdraw funds
+
+```shell
+npx hardhat withdrawFunds --amount <amount> --recipient <address> --bridge $SRC_BRIDGE --handler $SRC_HANDLER --token-address $SRC_TOKEN --gas-price <gasPrice> --gas-limit <gasLimit> --network bsc-testnet
+```
+
 ## Folder Structures
+
+TODO: Update document for folder structures
