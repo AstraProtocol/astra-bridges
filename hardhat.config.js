@@ -37,6 +37,11 @@ module.exports = {
       chainId: 11110,
       accounts: getAccounts(),
     },
+    'astra-testnet': {
+      url: 'https://rpc.astranaut.dev',
+      chainId: 11115,
+      accounts: getAccounts(),
+    },
     rinkeby: {
       url: 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161', // public infura endpoint
       chainId: 4,
