@@ -4,7 +4,7 @@
 // You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
-const { isValidAddress } = require('../src/utils/ethers');
+const { isValidAddress } = require('../tasks/utils');
 const hre = require('hardhat');
 const fs = require('fs/promises');
 const path = require('path');

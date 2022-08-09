@@ -93,7 +93,7 @@ describe('Bridge', function () {
     await this.dstToken.grantRole(MINTER_ROLE, this.dstHandler.address);
   });
 
-  it('send from src to dst via Bridge', async function () {
+  it('send from src to dst via Bridge and vice versa', async function () {
     expect(
       (await this.dstToken.balanceOf(this.walletAddress)).toString()
     ).to.be.eq('0');

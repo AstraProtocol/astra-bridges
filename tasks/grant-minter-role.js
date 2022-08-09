@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-const { isValidAddress } = require('../src/utils/ethers');
+const { isValidAddress } = require('../tasks/utils');
 const { setupArgs } = require('./utils');
 
 /**

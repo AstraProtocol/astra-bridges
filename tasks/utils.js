@@ -58,7 +58,18 @@ const expandDecimals = (amount, decimals = 18) => {
   return ethers.utils.parseUnits(String(amount), decimals);
 };
 
+const isValidAddress = (address) => {
+  try {
+    ethers.utils.getAddress(address);
+  } catch (e) {
+    console.log(`"${address}" is not a valid address: ` + e);
+    return false;
+  }
+  return true;
+};
+
 module.exports = {
+  isValidAddress,
   getDeploymentAddresses,
   setupArgs,
   expandDecimals,
