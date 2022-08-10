@@ -31,7 +31,7 @@ contract HandlerHelpers is IERCHandler {
     /**
         @param bridgeAddress Contract address of previously deployed Bridge.
      */
-    constructor(address bridgeAddress) public {
+    constructor(address bridgeAddress) {
         _bridgeAddress = bridgeAddress;
     }
 
@@ -60,8 +60,6 @@ contract HandlerHelpers is IERCHandler {
     function setBurnable(address contractAddress) external override onlyBridge {
         _setBurnable(contractAddress);
     }
-
-    function withdraw(bytes memory data) external virtual override {}
 
     function _setResource(bytes32 resourceID, address contractAddress) internal {
         _resourceIDToTokenContractAddress[resourceID] = contractAddress;

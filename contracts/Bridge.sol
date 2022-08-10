@@ -76,7 +76,7 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
 
         // Get handler and deposit into safe
         IDepositExecute depositHandler = IDepositExecute(handlerAddress);
-        bytes memory handlerResponse = depositHandler.deposit(_resourceID, _from, _data);
+        depositHandler.deposit(_resourceID, _from, _data);
 
         _lzSend(_dstChainId, _data, payable(msg.sender), address(0x0), _adapterParams);
 
@@ -182,16 +182,6 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
     function adminSetBurnable(address handlerAddress, address tokenAddress) external onlyAdmin {
         IERCHandler handler = IERCHandler(handlerAddress);
         handler.setBurnable(tokenAddress);
-    }
-
-    /**
-        @notice Used to manually withdraw funds from ERC safes.
-        @param handlerAddress Address of handler to withdraw from.
-        @param data ABI-encoded withdrawal params relevant to the specified handler.
-     */
-    function adminWithdraw(address handlerAddress, bytes memory data) external onlyAdmin {
-        IERCHandler handler = IERCHandler(handlerAddress);
-        handler.withdraw(data);
     }
 
     /**

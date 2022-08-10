@@ -97,12 +97,6 @@ npx hardhat setTrustedRemote --network [network]
 npx hardhat setBurnable --network [network]
 ```
 
-### Admin withdraw funds
-
-```shell
-npx hardhat withdrawFunds --amount <amount> --recipient <address> --bridge $SRC_BRIDGE --handler $SRC_HANDLER --token-address $SRC_TOKEN --gas-price <gasPrice> --gas-limit <gasLimit> --network bsc-testnet
-```
-
 ## Folder Structures
 
 TODO: Update document for folder structures

@@ -15,7 +15,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
     /**
         @param bridgeAddress Contract address of previously deployed Bridge.
      */
-    constructor(address bridgeAddress) public HandlerHelpers(bridgeAddress) {}
+    constructor(address bridgeAddress) HandlerHelpers(bridgeAddress) {}
 
     /**
         @notice A deposit is initiatied by making a deposit in the Bridge contract.
@@ -66,23 +66,5 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
         } else {
             releaseERC20(tokenAddress, address(recipientAddress), amount);
         }
-    }
-
-    /**
-        @notice Used to manually release ERC20 tokens from ERC20Safe.
-        @param data Consists of {tokenAddress}, {recipient}, and {amount} all padded to 32 bytes.
-        @notice Data passed into the function should be constructed as follows:
-        tokenAddress                           address     bytes  0 - 32
-        recipient                              address     bytes  32 - 64
-        amount                                 uint        bytes  64 - 96
-     */
-    function withdraw(bytes memory data) external override onlyBridge {
-        address tokenAddress;
-        address recipient;
-        uint256 amount;
-
-        (tokenAddress, recipient, amount) = abi.decode(data, (address, address, uint256));
-
-        releaseERC20(tokenAddress, recipient, amount);
     }
 }
