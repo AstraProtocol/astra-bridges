@@ -50,17 +50,17 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
     /**
         @notice Override for estimate send fees for current chain to dst chain
         @param _dstChainId ID of chain to send
-        @param _data bytes data to send {resourceID,amount,toAddress}
+        @param _payload bytes data to send
         @param _useZro use Zro?
         @param _adapterParams additional params
      */
     function estimateSendFee(
         uint16 _dstChainId,
-        bytes memory _data,
+        bytes memory _payload,
         bool _useZro,
         bytes memory _adapterParams
     ) public view virtual returns (uint256 nativeFee, uint256 zroFee) {
-        return lzEndpoint.estimateFees(_dstChainId, address(this), _data, _useZro, _adapterParams);
+        return lzEndpoint.estimateFees(_dstChainId, address(this), _payload, _useZro, _adapterParams);
     }
 
     function sendToChain(
