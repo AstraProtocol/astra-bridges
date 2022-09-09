@@ -66,17 +66,17 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
     function sendToChain(
         address _from,
         uint16 _dstChainId,
-        bytes32 _resourceID,
         bytes calldata _data, // {resourceID,amount,toAddress}
         bytes calldata _adapterParams
     ) external payable virtual whenNotPaused {
         // First get resource handler ID and verify
-        address handlerAddress = _resourceIDToHandlerAddress[_resourceID];
-        require(handlerAddress != address(0), "this _resourceID not mapped to any handler");
+        bytes32 resourceID = abi.decode(_data, (bytes32));
+        address handlerAddress = _resourceIDToHandlerAddress[resourceID];
+        require(handlerAddress != address(0), "this resourceID not mapped to any handler");
 
         // Get handler and deposit into safe
         IDepositExecute depositHandler = IDepositExecute(handlerAddress);
-        depositHandler.deposit(_resourceID, _from, _data);
+        depositHandler.deposit(resourceID, _from, _data);
 
         _lzSend(_dstChainId, _data, payable(msg.sender), address(0x0), _adapterParams);
 
