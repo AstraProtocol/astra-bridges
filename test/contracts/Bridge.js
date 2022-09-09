@@ -113,9 +113,7 @@ describe('Bridge', function () {
       [1, 350000]
     );
     await this.srcBridge.sendToChain(
-      this.walletAddress,
       this.dstChainId,
-      this.resourceID,
       data,
       adapterParams,
       { value: 20_000_000_000 }
@@ -127,9 +125,7 @@ describe('Bridge', function () {
 
     // Send one more
     await this.srcBridge.sendToChain(
-      this.walletAddress,
       this.dstChainId,
-      this.resourceID,
       data,
       adapterParams,
       { value: 20_000_000_000 }
@@ -138,9 +134,7 @@ describe('Bridge', function () {
     // Expect receive from dst
     await this.dstToken.approve(this.dstHandler.address, sendAmount.mul(10));
     await this.dstBridge.sendToChain(
-      this.walletAddress,
       this.srcChainId,
-      this.resourceID,
       process.env.RESOURCE_ID + // Resource ID           (32 bytes)
         ethers.utils.hexZeroPad(sendAmount.toHexString(), 32).substring(2) + // Deposit Amount        (32 bytes)
         this.walletAddress.substring(2) +

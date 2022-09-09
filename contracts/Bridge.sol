@@ -64,7 +64,6 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
     }
 
     function sendToChain(
-        address _from,
         uint16 _dstChainId,
         bytes32 _resourceID,
         bytes calldata _data, // {resourceID,amount,toAddress}
@@ -76,7 +75,7 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
 
         // Get handler and deposit into safe
         IDepositExecute depositHandler = IDepositExecute(handlerAddress);
-        depositHandler.deposit(_resourceID, _from, _data);
+        depositHandler.deposit(_resourceID, msg.sender, _data);
 
         _lzSend(_dstChainId, _data, payable(msg.sender), address(0x0), _adapterParams);
 
