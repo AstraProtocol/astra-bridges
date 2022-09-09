@@ -33,7 +33,7 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
         address depositer,
         bytes calldata data
     ) external override onlyBridge returns (bytes memory) {
-        uint256 amount = abi.decode(data[32:64], (uint256));
+        uint256 amount = abi.decode(data, (uint256));
 
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
         require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
@@ -51,13 +51,12 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
         @param data Consists of {resourceID}, {amount}, {toAddress},
         and {destinationRecipientAddress} all padded to 32 bytes.
         @notice Data passed into the function should be constructed as follows:
-        rID                                    bytes32     bytes  0 - 32
-        amount                                 uint256     bytes  32 - 64
-        toAddress                              bytes       bytes  64 - END
+        amount                                 uint256     bytes  0 - 32
+        toAddress                              bytes       bytes  32 - END
      */
     function execute(bytes32 resourceID, bytes calldata data) external override onlyBridge {
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
-        (uint256 amount, bytes20 recipientAddress) = abi.decode(data[32:], (uint256, bytes20));
+        (uint256 amount, bytes20 recipientAddress) = abi.decode(data, (uint256, bytes20));
 
         require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
 

@@ -50,7 +50,7 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
     /**
         @notice Override for estimate send fees for current chain to dst chain
         @param _dstChainId ID of chain to send
-        @param _data bytes data to send
+        @param _data bytes data to send {resourceID,amount,toAddress}
         @param _useZro use Zro?
         @param _adapterParams additional params
      */
@@ -64,24 +64,26 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
     }
 
     function sendToChain(
-        address _from,
         uint16 _dstChainId,
-        bytes calldata _data, // {resourceID,amount,toAddress}
+        bytes32 _resourceID,
+        bytes calldata _data, // {amount,toAddress}
         bytes calldata _adapterParams
     ) external payable virtual whenNotPaused {
         // First get resource handler ID and verify
-        bytes32 resourceID = abi.decode(_data, (bytes32));
-        address handlerAddress = _resourceIDToHandlerAddress[resourceID];
-        require(handlerAddress != address(0), "this resourceID not mapped to any handler");
+        address handlerAddress = _resourceIDToHandlerAddress[_resourceID];
+        require(handlerAddress != address(0), "this _resourceID not mapped to any handler");
 
         // Get handler and deposit into safe
         IDepositExecute depositHandler = IDepositExecute(handlerAddress);
-        depositHandler.deposit(resourceID, _from, _data);
+        depositHandler.deposit(_resourceID, msg.sender, _data);
 
-        _lzSend(_dstChainId, _data, payable(msg.sender), address(0x0), _adapterParams);
+        // Encode payload for sending via LZ
+        bytes memory payload = abi.encode(_resourceID, _data);
+
+        _lzSend(_dstChainId, payload, payable(msg.sender), address(0x0), _adapterParams);
 
         uint64 nonce = lzEndpoint.getOutboundNonce(_dstChainId, address(this));
-        emit SendToChain(msg.sender, _dstChainId, _data, nonce);
+        emit SendToChain(msg.sender, _dstChainId, payload, nonce);
     }
 
     function _nonblockingLzReceive(
@@ -91,12 +93,12 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
         bytes memory _payload
     ) internal virtual override {
         // decode and load the resouce ID, and received data
-        bytes32 resourceID = abi.decode(_payload, (bytes32));
+        (bytes32 resourceID, bytes memory data) = abi.decode(_payload, (bytes32, bytes));
 
         // Get handler by resource ID and execute with data
         address handlerAddress = _resourceIDToHandlerAddress[resourceID];
         IDepositExecute handler = IDepositExecute(handlerAddress);
-        handler.execute(resourceID, _payload);
+        handler.execute(resourceID, data);
 
         emit ReceiveFromChain(_srcChainId, _srcAddress, _payload, _nonce);
     }

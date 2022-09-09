@@ -21,8 +21,7 @@ module.exports = async function (taskArgs, hre) {
   );
   const { ethers } = hre;
 
-  const data =
-    process.env.RESOURCE_ID + // Resource ID           (32 bytes)
+  const rawData =
     ethers.utils
       .hexZeroPad(
         ethers.utils.parseEther(String(taskArgs.amount)).toHexString(),
@@ -37,10 +36,10 @@ module.exports = async function (taskArgs, hre) {
     [1, 350000]
   );
 
-  // Estimate fee
+  // padding resourceID for estimate send fee
   let sendFeeResp = await srcBridge.estimateSendFee(
     taskArgs.targetChainId,
-    data,
+    taskArgs.resourceId + rawData,
     true,
     adapterParams
   );
@@ -48,10 +47,9 @@ module.exports = async function (taskArgs, hre) {
 
   // Call send to chain
   const tx = await srcBridge.sendToChain(
-    taskArgs.owner.address,
     taskArgs.targetChainId,
     taskArgs.resourceId,
-    data,
+    '0x' + rawData,
     adapterParams,
     {
       value: sendFee,
