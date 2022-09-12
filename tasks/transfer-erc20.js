@@ -28,8 +28,8 @@ module.exports = async function (taskArgs, hre) {
         32
       )
       .substring(2) + // Deposit Amount        (32 bytes)
-    taskArgs.recipient.substring(2) +
-    '000000000000000000000000'; // RecipientAddress      (32 bytes)
+      '000000000000000000000000' +
+      taskArgs.recipient.substring(2); // RecipientAddress     (32 bytes)
 
   const adapterParams = ethers.utils.solidityPack(
     ['uint16', 'uint256'],

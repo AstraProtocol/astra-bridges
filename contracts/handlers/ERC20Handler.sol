@@ -56,14 +56,14 @@ contract ERC20Handler is IDepositExecute, HandlerHelpers, ERC20Safe {
      */
     function execute(bytes32 resourceID, bytes calldata data) external override onlyBridge {
         address tokenAddress = _resourceIDToTokenContractAddress[resourceID];
-        (uint256 amount, bytes20 recipientAddress) = abi.decode(data, (uint256, bytes20));
+        (uint256 amount, address recipientAddress) = abi.decode(data, (uint256, address));
 
         require(_contractWhitelist[tokenAddress], "provided tokenAddress is not whitelisted");
 
         if (_burnList[tokenAddress]) {
-            mintERC20(tokenAddress, address(recipientAddress), amount);
+            mintERC20(tokenAddress, recipientAddress, amount);
         } else {
-            releaseERC20(tokenAddress, address(recipientAddress), amount);
+            releaseERC20(tokenAddress, recipientAddress, amount);
         }
     }
 }
