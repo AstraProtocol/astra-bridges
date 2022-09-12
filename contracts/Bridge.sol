@@ -67,6 +67,7 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
         uint16 _dstChainId,
         bytes32 _resourceID,
         bytes calldata _data, // {amount,toAddress}
+        address payingInZro,
         bytes calldata _adapterParams
     ) external payable virtual whenNotPaused {
         // First get resource handler ID and verify
@@ -80,7 +81,7 @@ contract Bridge is NonblockingLzApp, AccessControl, Pausable, IBridge {
         // Encode payload for sending via LZ
         bytes memory payload = abi.encode(_resourceID, _data);
 
-        _lzSend(_dstChainId, payload, payable(msg.sender), address(0x0), _adapterParams);
+        _lzSend(_dstChainId, payload, payable(msg.sender), payingInZro, _adapterParams);
 
         uint64 nonce = lzEndpoint.getOutboundNonce(_dstChainId, address(this));
         emit SendToChain(msg.sender, _dstChainId, payload, nonce);

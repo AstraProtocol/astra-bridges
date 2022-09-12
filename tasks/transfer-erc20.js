@@ -50,6 +50,7 @@ module.exports = async function (taskArgs, hre) {
     taskArgs.targetChainId,
     taskArgs.resourceId,
     '0x' + rawData,
+    "0x0000000000000000000000000000000000000000",
     adapterParams,
     {
       value: sendFee,

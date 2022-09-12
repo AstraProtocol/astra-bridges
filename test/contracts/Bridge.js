@@ -116,6 +116,7 @@ describe('Bridge', function () {
       this.dstChainId,
       this.resourceID,
       data,
+      "0x0000000000000000000000000000000000000000",
       adapterParams,
       { value: 20_000_000_000 }
     );
@@ -129,6 +130,7 @@ describe('Bridge', function () {
       this.dstChainId,
       this.resourceID,
       data,
+      "0x0000000000000000000000000000000000000000",
       adapterParams,
       { value: 20_000_000_000 }
     );
@@ -142,6 +144,7 @@ describe('Bridge', function () {
         ethers.utils.hexZeroPad(sendAmount.toHexString(), 32).substring(2) + // Deposit Amount        (32 bytes)
         this.walletAddress.substring(2) +
         '000000000000000000000000', // RecipientAddress      (32 bytes),
+      "0x0000000000000000000000000000000000000000",
       adapterParams,
       { value: 20_000_000_000 }
     );
