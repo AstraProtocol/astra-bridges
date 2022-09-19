@@ -103,10 +103,10 @@ describe('Bridge', function () {
     await this.srcToken.approve(this.srcHandler.address, sendAmount.mul(10));
     // Then send token
     const data =
-      process.env.RESOURCE_ID + // Resource ID           (32 bytes)
+      '0x' +
       ethers.utils.hexZeroPad(sendAmount.toHexString(), 32).substring(2) + // Deposit Amount        (32 bytes)
-      this.walletAddress.substring(2) +
-      '000000000000000000000000'; // RecipientAddress + 0 pads      (32 bytes)
+      '000000000000000000000000' +
+      this.walletAddress.substring(2); // RecipientAddress + 0 pads      (32 bytes)
 
     const adapterParams = ethers.utils.solidityPack(
       ['uint16', 'uint256'],
@@ -114,7 +114,9 @@ describe('Bridge', function () {
     );
     await this.srcBridge.sendToChain(
       this.dstChainId,
+      this.resourceID,
       data,
+      '0x0000000000000000000000000000000000000000',
       adapterParams,
       { value: 20_000_000_000 }
     );
@@ -126,7 +128,9 @@ describe('Bridge', function () {
     // Send one more
     await this.srcBridge.sendToChain(
       this.dstChainId,
+      this.resourceID,
       data,
+      '0x0000000000000000000000000000000000000000',
       adapterParams,
       { value: 20_000_000_000 }
     );
@@ -135,10 +139,12 @@ describe('Bridge', function () {
     await this.dstToken.approve(this.dstHandler.address, sendAmount.mul(10));
     await this.dstBridge.sendToChain(
       this.srcChainId,
-      process.env.RESOURCE_ID + // Resource ID           (32 bytes)
+      this.resourceID,
+      '0x' +
         ethers.utils.hexZeroPad(sendAmount.toHexString(), 32).substring(2) + // Deposit Amount        (32 bytes)
-        this.walletAddress.substring(2) +
-        '000000000000000000000000', // RecipientAddress      (32 bytes),
+        '000000000000000000000000' +
+        this.walletAddress.substring(2), // RecipientAddress      (32 bytes),
+      '0x0000000000000000000000000000000000000000',
       adapterParams,
       { value: 20_000_000_000 }
     );
@@ -147,6 +153,6 @@ describe('Bridge', function () {
     expect(dstBalance.toString()).to.be.eq(sendAmount.toString());
 
     const srcBalance = await this.srcToken.balanceOf(this.walletAddress);
-    expect(srcBalance.toString().startsWith("99")).to.be.true;
+    expect(srcBalance.toString().startsWith('99')).to.be.true;
   });
 });
